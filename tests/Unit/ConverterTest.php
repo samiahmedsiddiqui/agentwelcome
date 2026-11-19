@@ -128,6 +128,14 @@ final class ConverterTest extends TestCase {
 		$this->assertSame( "Read\n", ( new Converter() )->convert( $node ) );
 	}
 
+	public function test_sibling_selectors_keep_the_first_element(): void {
+		$extractor = new Extractor( new Selector(), array( '.w + .w' ) );
+		$html      = '<body><h1>Build <span class="w">AI</span><span class="w">Data</span><span class="w">Cloud</span> apps</h1></body>';
+		$node      = $extractor->extract( $html, 'body', 'https://example.com/' );
+
+		$this->assertSame( "# Build AI apps\n", ( new Converter() )->convert( $node ) );
+	}
+
 	public function test_custom_strip_selectors(): void {
 		$extractor = new Extractor( new Selector(), array( '.ads' ) );
 		$node      = $extractor->extract( '<body><div class="ads">Buy</div><p>Read</p></body>', 'body', 'https://example.com/' );

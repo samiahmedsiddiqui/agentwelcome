@@ -2,8 +2,9 @@
 /**
  * Compiles a small CSS selector subset to XPath.
  *
- * Supports tag, #id, .class, [attr], [attr=v], [attr^=v], [attr$=v], [attr*=v],
- * compound selectors, descendant and child (>) combinators, and comma lists.
+ * Supports tag, #id, .class, [attr], [attr=v], [attr^=v], [attr$=v], [attr*=v], [attr~=v], [attr|=v],
+ * compound selectors, descendant, child (>), next sibling (+) and later sibling (~)
+ * combinators, and comma lists.
  *
  * @package AgentWelcome
  */
@@ -14,7 +15,7 @@ namespace AgentWelcome\Rendering;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Turns simple CSS selectors into XPath queries. Supported: tags, #id, .class, attribute tests, descendants and children. */
+/** Turns simple CSS selectors into XPath queries. Supported: tags, #id, .class, attribute tests, descendants, children and siblings. */
 final class Selector {
 
 	/**
@@ -88,7 +89,7 @@ final class Selector {
 			return null;
 		}
 
-		$pattern = '/\G\s*(>)?\s*((?:[a-zA-Z*][\w-]*)?(?:#[\w-]+|\.[\w-]+|\[[^\]]*\])*)/';
+		$pattern = '/\G\s*([>+~])?\s*((?:[a-zA-Z*][\w-]*)?(?:#[\w-]+|\.[\w-]+|\[[^\]]*\])*)/';
 		$offset  = 0;
 		$xpath   = '';
 		$length  = strlen( $selector );
@@ -98,13 +99,14 @@ final class Selector {
 				return null;
 			}
 
-			$step = $this->compound( $match[2] );
+			$step       = $this->compound( $match[2] );
+			$combinator = '' === $xpath ? '' : $match[1];
 
-			if ( null === $step ) {
+			if ( null === $step || ( '' === $xpath && in_array( $match[1], array( '+', '~' ), true ) ) ) {
 				return null;
 			}
 
-			$xpath .= ( '' === $xpath || '' === $match[1] ? '//' : '/' ) . $step;
+			$xpath .= $this->join( $combinator, $step[0], $step[1] );
 
 			$offset += strlen( $match[0] );
 
@@ -120,9 +122,9 @@ final class Selector {
 	 * Converts one part of a selector, such as "div.card[data-x]".
 	 *
 	 * @param string $compound A tag with optional #id, .class and attribute tests.
-	 * @return string|null The XPath step, or null when it is not supported.
+	 * @return array{string, string}|null The tag and the XPath tests, or null when it is not supported.
 	 */
-	private function compound( string $compound ): ?string {
+	private function compound( string $compound ): ?array {
 		if ( ! preg_match( '/^([a-zA-Z*][\w-]*)?(.*)$/', $compound, $match ) ) {
 			return null;
 		}
@@ -151,14 +153,35 @@ final class Selector {
 			$offset += strlen( $part[0] );
 		}
 
-		return $tag . $predicates;
+		return array( $tag, $predicates );
+	}
+
+	/**
+	 * Adds a step to the XPath, according to the combinator in front of it.
+	 *
+	 * @param string $combinator Empty for a descendant, or one of >, + and ~.
+	 * @param string $tag        Tag name, or * for any.
+	 * @param string $tests      XPath tests for the step, in square brackets.
+	 * @return string The XPath for the step.
+	 */
+	private function join( string $combinator, string $tag, string $tests ): string {
+		switch ( $combinator ) {
+			case '>':
+				return '/' . $tag . $tests;
+			case '+':
+				return '/following-sibling::*[1][self::' . $tag . ']' . $tests;
+			case '~':
+				return '/following-sibling::' . $tag . $tests;
+			default:
+				return '//' . $tag . $tests;
+		}
 	}
 
 	/**
 	 * Builds the XPath test for an attribute.
 	 *
 	 * @param string $name     Attribute name.
-	 * @param string $operator One of =, ^=, $=, *= or an empty string for "has the attribute".
+	 * @param string $operator One of =, ^=, $=, *=, ~=, |= or an empty string for "has the attribute".
 	 * @param string $value    Value to compare with.
 	 * @return string The test, in square brackets.
 	 */
@@ -175,6 +198,10 @@ final class Selector {
 				return "[substring({$attribute}, string-length({$attribute}) - string-length({$quoted}) + 1) = {$quoted}]";
 			case '*=':
 				return "[contains({$attribute}, {$quoted})]";
+			case '~=':
+				return "[contains(concat(' ', normalize-space({$attribute}), ' '), " . $this->literal( ' ' . $value . ' ' ) . ')]';
+			case '|=':
+				return "[{$attribute}={$quoted} or starts-with({$attribute}, " . $this->literal( $value . '-' ) . ')]';
 			default:
 				return "[{$attribute}]";
 		}

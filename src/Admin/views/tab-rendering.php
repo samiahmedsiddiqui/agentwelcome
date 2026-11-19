@@ -38,7 +38,7 @@ $has_pass = '' !== (string) $options->get( 'http_auth_password', '' );
 	<div class="agentwelcome-field">
 		<label for="agentwelcome-strip"><?php esc_html_e( 'Elements to exclude', 'agentwelcome' ); ?></label>
 		<textarea id="agentwelcome-strip" name="<?php echo esc_attr( $name ); ?>[strip_selectors]" rows="3" class="large-text code" placeholder=".cookie-notice&#10;article footer"><?php echo esc_textarea( (string) $options->get( 'strip_selectors', '' ) ); ?></textarea>
-		<p class="description"><?php esc_html_e( 'One CSS selector per line. These are removed in addition to the built-in list. Unsupported selectors are ignored.', 'agentwelcome' ); ?></p>
+		<p class="description"><?php esc_html_e( 'One CSS selector per line. These are removed in addition to the built-in list. Tags, classes, IDs, attributes and the > + ~ combinators work. Unsupported selectors are ignored.', 'agentwelcome' ); ?></p>
 		<?php
 		View::render(
 			'partials/chips',
