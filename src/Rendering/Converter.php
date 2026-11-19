@@ -488,7 +488,7 @@ final class Converter {
 	}
 
 	/**
-	 * Writes an image. Tracking pixels are left out.
+	 * Writes an image. Tracking pixels are left out. An image with no alt text is named after its title, or after its file when the name is readable. An empty alt is kept for small images, which are decoration.
 	 *
 	 * @param DOMElement $element The img element.
 	 * @return string Markdown, or an empty string when the image is left out.
@@ -501,9 +501,57 @@ final class Converter {
 		}
 
 		$alt = trim( (string) preg_replace( '/\s+/', ' ', $element->getAttribute( 'alt' ) ) );
+
+		if ( '' === $alt && ( ! $element->hasAttribute( 'alt' ) || $this->is_large( $element ) ) ) {
+			$title = trim( (string) preg_replace( '/\s+/', ' ', $element->getAttribute( 'title' ) ) );
+			$alt   = '' === $title ? $this->file_label( $src ) : $title;
+		}
+
 		$alt = str_replace( array( '[', ']' ), array( '\\[', '\\]' ), $alt );
 
 		return '![' . $alt . '](' . $this->destination( $src ) . ')';
+	}
+
+	/**
+	 * Whether an image is big enough to be content, going by its width and height attributes.
+	 *
+	 * @param DOMElement $image Image element.
+	 * @return bool True when both sizes are given and at least 100.
+	 */
+	private function is_large( DOMElement $image ): bool {
+		$width  = $image->getAttribute( 'width' );
+		$height = $image->getAttribute( 'height' );
+
+		return ctype_digit( $width ) && ctype_digit( $height ) && (int) $width >= 100 && (int) $height >= 100;
+	}
+
+	/**
+	 * Turns the file name of an image into a label, or returns an empty string when the name would mean nothing to a reader.
+	 *
+	 * @param string $src Address of the image.
+	 * @return string The label, such as "team photo" for team-photo-300x200.jpg.
+	 */
+	private function file_label( string $src ): string {
+		$path = wp_parse_url( $src, PHP_URL_PATH );
+
+		if ( ! is_string( $path ) ) {
+			return '';
+		}
+
+		$name = rawurldecode( pathinfo( $path, PATHINFO_FILENAME ) );
+		$name = (string) preg_replace( '/-(?:\d+x\d+|scaled|e\d{10,})$/', '', $name );
+		$name = trim( (string) preg_replace( '/[\s_-]+/', ' ', $name ) );
+		$text = (string) preg_replace( '/\s+/', '', $name );
+
+		if ( strlen( $text ) < 3 || 1 === preg_match( '/^[a-f0-9]{8,}$/i', $text ) ) {
+			return '';
+		}
+
+		if ( 1 === preg_match( '/^(?:screenshot|screen shot)\b/i', $name ) || 1 === preg_match( '/^(?:img|dsc|dscn|pxl|mvimg|vid|image|photo|picture|pic|untitled|download|unnamed|scan|wp)[\s\d.]*$/i', $name ) ) {
+			return '';
+		}
+
+		return preg_match_all( '/\p{L}/u', $text ) / max( 1, mb_strlen( $text ) ) >= 0.6 ? $name : '';
 	}
 
 	/**
