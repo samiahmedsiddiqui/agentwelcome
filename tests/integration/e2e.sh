@@ -87,7 +87,7 @@ P=$(curl -s $B/polish-page.md)
 has "icon joined to text" "$P" '✓ Feature one'
 has "cross joined" "$P" '✗ Not included'
 [[ "$P" == *"![About]"* ]] && echo "ok   logo image beside link text kept" || echo "FAIL logo image dropped"
-has "link kept" "$P" '[About](http://127.0.0.1:8899/about/)'
+has "link kept, with its logo" "$P" '[About ![About](https://example.org/a.svg)](http://127.0.0.1:8899/about/)'
 has "superscript" "$P" 'lab^1'
 has "bold heading unwrapped" "$P" '## Bold heading'
 [[ "$P" != *"## **"* ]] && echo "ok   no bold markers in headings" || echo "FAIL heading bold"
