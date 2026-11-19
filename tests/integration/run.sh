@@ -19,6 +19,7 @@ run "end to end" ./e2e.sh
 run "environment" python3 env_test.py
 run "cache" python3 cache_test.py
 run "markdown preview renderer" node render_test.js
+run "markdown link preview" python3 preview_test.py
 run "verify" python3 verify_test.py
 run "scan" python3 scan_test.py
 run "scan without cron" python3 scan_nocron_test.py

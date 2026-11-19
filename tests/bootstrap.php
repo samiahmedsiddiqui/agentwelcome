@@ -66,3 +66,33 @@ if ( ! function_exists( 'wp_check_invalid_utf8' ) ) {
 		return mb_check_encoding( (string) $text, 'UTF-8' ) ? $text : ( $strip ? (string) iconv( 'UTF-8', 'UTF-8//IGNORE', (string) $text ) : '' );
 	}
 }
+
+if ( ! function_exists( 'esc_html' ) ) {
+	function esc_html( $text ) {
+		return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8', false );
+	}
+}
+
+if ( ! function_exists( 'esc_html__' ) ) {
+	function esc_html__( $text, $domain = 'default' ) {
+		return esc_html( $text );
+	}
+}
+
+if ( ! function_exists( 'esc_attr' ) ) {
+	function esc_attr( $text ) {
+		return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8', false );
+	}
+}
+
+if ( ! function_exists( 'esc_url' ) ) {
+	function esc_url( $url ) {
+		return htmlspecialchars( (string) $url, ENT_QUOTES, 'UTF-8', false );
+	}
+}
+
+if ( ! function_exists( 'esc_textarea' ) ) {
+	function esc_textarea( $text ) {
+		return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
+	}
+}

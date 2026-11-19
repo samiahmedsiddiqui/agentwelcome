@@ -1,9 +1,9 @@
-// Runs assets/js/verify.js's Markdown renderer against a minimal fake DOM, with a watchdog for hangs.
+// Runs assets/js/markdown.js's Markdown renderer against a minimal fake DOM, with a watchdog for hangs.
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const SCRIPT = process.env.VERIFY_JS || path.join(__dirname, 'wp-test', 'wp', 'wp-content', 'plugins', 'agentwelcome', 'assets', 'js', 'verify.js');
+const SCRIPT = process.env.MARKDOWN_JS || path.join(__dirname, 'wp-test', 'wp', 'wp-content', 'plugins', 'agentwelcome', 'assets', 'js', 'markdown.js');
 
 if (process.argv[2] !== 'child') {
   const run = spawnSync(process.execPath, [__filename, 'child'], { encoding: 'utf8', timeout: 15000 });
@@ -33,7 +33,7 @@ new Function('window', 'document', fs.readFileSync(SCRIPT, 'utf8'))(global.windo
 let pass = 0;
 let fail = 0;
 const check = (name, ok, extra = '') => { ok ? pass++ : fail++; console.log((ok ? 'ok   ' : 'FAIL ') + name + (ok ? '' : '  ' + extra)); };
-const render = (md) => { const root = new Node_('div'); window.agentwelcomeRenderMarkdown(md, root); return root; };
+const render = (md, options) => { const root = new Node_('div'); window.agentwelcomeRenderMarkdown(md, root, options); return root; };
 
 const JS = 'java' + 'script:alert(1)';
 const SCRIPT_TAG = '<' + 'scr' + 'ipt>alert(1)<' + '/scr' + 'ipt>';
@@ -76,6 +76,18 @@ check('an unclosed fence runs to the end', r.find('pre').length === 1 && r.find(
 
 r = render('---\ntitle: "T"\nurl: "http://x"\n---\n# Body');
 check('front matter goes into a Metadata block', r.find('details').length === 1 && r.find('pre')[0].textContent.includes('title: "T"') && r.find('h1').length === 1);
+
+r = render('---\ntitle: "A \\"quoted\\" title"\nurl: "https://example.com/a/"\nlanguage: "en-US"\n---\n# Body', { metadata: 'list' });
+check('front matter as a list shows keys, decoded values and a link for a URL', r.find('dl').length === 1 && r.find('dt').map((d) => d.textContent).join(',') === 'title,url,language' && r.find('dd')[0].textContent === 'A "quoted" title' && r.find('a')[0].attrs.href === 'https://example.com/a/' && r.find('pre').length === 0 && r.find('h1').length === 1, r.textContent);
+
+r = render('---\ntitle: "<b>x</b>"\nurl: "' + JS + '"\n---\nText', { metadata: 'list' });
+check('front matter values stay text and a non-http value gets no link', r.find('b').length === 0 && r.find('a').length === 0 && r.find('dd')[0].textContent === '<b>x</b>' && r.find('dd')[1].textContent === JS);
+
+r = render('---\nnot a pair\n---\nText', { metadata: 'list' });
+check('front matter that is not key and value pairs falls back to the raw block', r.find('dl').length === 0 && r.find('pre').length === 1 && r.find('pre')[0].textContent === 'not a pair');
+
+r = render('---\ntitle: "T"\n---\nText');
+check('without the list option the raw block is kept', r.find('dl').length === 0 && r.find('pre').length === 1);
 
 r = render('One\n\n---\n\nTwo');
 check('a rule between paragraphs is not front matter', r.find('hr').length === 1 && r.find('p').length === 2);

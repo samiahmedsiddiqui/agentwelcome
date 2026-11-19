@@ -98,6 +98,10 @@ A real file in the site root is served by the web server before WordPress runs, 
 
 It adds comment lines that point to llms.txt (and llms-full.txt when it is on). They add no allow or disallow rules. It does nothing if a real robots.txt file exists on the server or if the site asks search engines not to index it.
 
+= How can I see a Markdown page formatted in a browser? =
+
+Add `?preview` to the address, for example `/about.md?preview`. The page then shows headings, lists, links, code and tables instead of raw text or a download, and the link can be shared. Under Settings > Content you can also make a plain `.md` link show the formatted page to people who open it in a browser. That is off by default. Agents and scripts always get the plain Markdown, and `?raw` gives it to a browser too.
+
 = How do I refresh the stored Markdown? =
 
 Pages refresh in the background when you save them. To refresh by hand use "Regenerate now" in the AgentWelcome box on the edit screen, "Regenerate all" or "Clear cache" on the settings page, the "Regenerate Markdown" action in the post lists, or `wp agentwelcome cache regenerate --all`.

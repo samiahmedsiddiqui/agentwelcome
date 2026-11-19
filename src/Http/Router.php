@@ -18,6 +18,7 @@ use AgentWelcome\Index\LlmsTxt;
 use AgentWelcome\Index\OutputCache;
 use AgentWelcome\Settings\LlmsOptions;
 use WP;
+use WP_Post;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -33,6 +34,8 @@ final class Router implements Hookable {
 	 * @param LlmsFullTxt      $llms_full    Builds llms-full.txt.
 	 * @param LlmsOptions      $llms_options Settings of the llms files.
 	 * @param MarkdownResponse $response     Sends the answer.
+	 * @param Preview          $preview      Decides whether a browser gets the formatted page.
+	 * @param PreviewPage      $page         Builds the formatted page.
 	 */
 	public function __construct(
 		private Urls $urls,
@@ -42,7 +45,9 @@ final class Router implements Hookable {
 		private LlmsTxt $llms,
 		private LlmsFullTxt $llms_full,
 		private LlmsOptions $llms_options,
-		private MarkdownResponse $response
+		private MarkdownResponse $response,
+		private Preview $preview,
+		private PreviewPage $page
 	) {}
 
 	/**
@@ -122,12 +127,49 @@ final class Router implements Hookable {
 			$this->terminate();
 		}
 
+		$extra = array( 'X-AgentWelcome-Cache' => $served->cache );
+
+		if ( $this->preview->automatic() ) {
+			$extra['Vary'] = Preview::VARY;
+		}
+
+		if ( $this->preview->wanted( $post ) ) {
+			$this->serve_preview( $post, $served->entry->markdown, $extra );
+		}
+
 		$this->response->send(
 			$served->entry->markdown,
 			(string) apply_filters( 'agentwelcome_content_type', MarkdownResponse::MARKDOWN, $post ),
 			(string) $this->urls->permalink( $post ),
 			(int) strtotime( $post->post_modified_gmt . ' UTC' ),
-			array( 'X-AgentWelcome-Cache' => $served->cache )
+			$extra
+		);
+
+		$this->terminate();
+	}
+
+	/**
+	 * Sends the formatted page of a Markdown page, and stops.
+	 *
+	 * @param WP_Post               $post     The page.
+	 * @param string                $markdown Its stored Markdown.
+	 * @param array<string, string> $extra    Headers to add.
+	 * @return never
+	 */
+	private function serve_preview( WP_Post $post, string $markdown, array $extra ): void {
+		$permalink = (string) $this->urls->permalink( $post );
+		$raw_url   = (string) ( $this->urls->markdown_url( $post ) ?? $permalink );
+
+		if ( $this->preview->automatic() ) {
+			$raw_url = add_query_arg( Preview::RAW, '1', $raw_url );
+		}
+
+		$this->response->send(
+			$this->page->render( wp_strip_all_tags( get_the_title( $post ) ), $markdown, $permalink, $raw_url, get_bloginfo( 'language' ) ),
+			PreviewPage::CONTENT_TYPE,
+			$permalink,
+			0,
+			array_merge( $extra, $this->page->headers() )
 		);
 
 		$this->terminate();

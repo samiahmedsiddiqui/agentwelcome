@@ -11,6 +11,7 @@ namespace AgentWelcome;
 
 defined( 'ABSPATH' ) || exit;
 
+use AgentWelcome\Admin\Assets;
 use AgentWelcome\Admin\CacheActions;
 use AgentWelcome\Admin\Capabilities;
 use AgentWelcome\Admin\LlmsPage;
@@ -40,6 +41,8 @@ use AgentWelcome\Environment\Environment;
 use AgentWelcome\Http\CronAuth;
 use AgentWelcome\Http\DiscoveryTags;
 use AgentWelcome\Http\MarkdownResponse;
+use AgentWelcome\Http\Preview;
+use AgentWelcome\Http\PreviewPage;
 use AgentWelcome\Http\Router;
 use AgentWelcome\Http\Urls;
 use AgentWelcome\Index\LlmsFullTxt;
@@ -151,7 +154,21 @@ final class Plugin {
 			$changes,
 			new Capabilities(),
 			new OutputCache(),
-			new Router( $urls, $eligibility, $pages, $environment, $llms, $llms_full, $llms_options, new MarkdownResponse() ),
+			new Router(
+				$urls,
+				$eligibility,
+				$pages,
+				$environment,
+				$llms,
+				$llms_full,
+				$llms_options,
+				new MarkdownResponse(),
+				new Preview( $options ),
+				new PreviewPage(
+					add_query_arg( 'ver', Assets::version( 'assets/js/markdown.js' ), AGENTWELCOME_URL . 'assets/js/markdown.js' ),
+					add_query_arg( 'ver', Assets::version( 'assets/css/preview.css' ), AGENTWELCOME_URL . 'assets/css/preview.css' )
+				)
+			),
 			new DiscoveryTags( $eligibility, $urls, $environment ),
 			new CronAuth( $options ),
 			new PagesController( $store, $pages, $status, $eligibility, $environment ),

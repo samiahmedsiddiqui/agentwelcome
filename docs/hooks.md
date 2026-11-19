@@ -28,6 +28,7 @@ Filters and examples for changing what the plugin does from code.
 | `agentwelcome_llms_max_items` | Entries per post type in `llms.txt` (default 500). |
 | `agentwelcome_content_type` | Content type of the Markdown response. |
 | `agentwelcome_response_headers` | Response headers. |
+| `agentwelcome_markdown_preview` | Whether a `.md` request gets the formatted page instead of the plain Markdown. Receives the decision (from `?preview`, `?raw` and the setting) and the `WP_Post`. |
 
 ### Excluding from code
 

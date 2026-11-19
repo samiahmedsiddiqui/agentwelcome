@@ -84,7 +84,8 @@ final class VerifyPage implements Hookable {
 
 		Assets::style();
 		wp_enqueue_script( 'agentwelcome-admin', AGENTWELCOME_URL . 'assets/js/admin.js', array(), Assets::version( 'assets/js/admin.js' ), true );
-		wp_enqueue_script( 'agentwelcome-verify', AGENTWELCOME_URL . 'assets/js/verify.js', array( 'wp-api-fetch' ), Assets::version( 'assets/js/verify.js' ), true );
+		wp_enqueue_script( 'agentwelcome-markdown', AGENTWELCOME_URL . 'assets/js/markdown.js', array(), Assets::version( 'assets/js/markdown.js' ), true );
+		wp_enqueue_script( 'agentwelcome-verify', AGENTWELCOME_URL . 'assets/js/verify.js', array( 'wp-api-fetch', 'agentwelcome-markdown' ), Assets::version( 'assets/js/verify.js' ), true );
 	}
 
 	/**

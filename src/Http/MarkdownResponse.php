@@ -26,18 +26,21 @@ final class MarkdownResponse {
 	 * @param string                $content_type Content type header.
 	 * @param string                $canonical    Address of the HTML page, sent as a canonical link header.
 	 * @param int                   $modified     Unix time the content last changed, or 0 when unknown.
-	 * @param array<string, string> $extra        Additional headers.
+	 * @param array<string, string> $extra        Additional headers. They replace a default header of the same name.
 	 * @return void
 	 */
 	public function send( string $body, string $content_type, string $canonical = '', int $modified = 0, array $extra = array() ): void {
 		$etag    = '"' . md5( $body ) . '"';
-		$headers = array(
-			'Content-Type'           => $content_type,
-			'X-Content-Type-Options' => 'nosniff',
-			'X-Robots-Tag'           => 'noindex',
-			'Cache-Control'          => 'public, max-age=300',
-			'ETag'                   => $etag,
-		) + $extra;
+		$headers = array_merge(
+			array(
+				'Content-Type'           => $content_type,
+				'X-Content-Type-Options' => 'nosniff',
+				'X-Robots-Tag'           => 'noindex',
+				'Cache-Control'          => 'public, max-age=300',
+				'ETag'                   => $etag,
+			),
+			$extra
+		);
 
 		if ( '' !== $canonical ) {
 			$headers['Link'] = '<' . esc_url_raw( $canonical ) . '>; rel="canonical"';
@@ -59,7 +62,7 @@ final class MarkdownResponse {
 		$this->send_headers( $headers );
 
 		if ( 'HEAD' !== $this->method() ) {
-			echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Served as text, never HTML.
+			echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Plain text, or a page that PreviewPage has already escaped.
 		}
 	}
 

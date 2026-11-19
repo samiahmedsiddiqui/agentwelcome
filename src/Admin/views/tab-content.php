@@ -65,6 +65,18 @@ $options = $vars['options'];
 </section>
 
 <section class="agentwelcome-card">
+	<h2><?php esc_html_e( 'Links opened in a browser', 'agentwelcome' ); ?></h2>
+	<p class="agentwelcome-intro"><?php esc_html_e( 'Add ?preview to any Markdown address to see it formatted, for example /about.md?preview. Agents and scripts always get the plain Markdown.', 'agentwelcome' ); ?></p>
+	<div class="agentwelcome-field">
+		<label>
+			<input type="checkbox" name="<?php echo esc_attr( $name ); ?>[browser_preview]" value="1" <?php checked( (bool) $options->get( 'browser_preview', false ) ); ?> />
+			<?php esc_html_e( 'Show the formatted page when a person opens a Markdown link in a browser', 'agentwelcome' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'Without this, a browser shows the plain text or downloads the file. A request counts as a person only when the browser says it is opening a page, which tools such as curl, scripts and most AI agents do not. A browser run by an agent does say so. Add ?raw to get the plain Markdown in any case. When this is on, Markdown responses also send a Vary header so caches keep the two versions apart.', 'agentwelcome' ); ?></p>
+	</div>
+</section>
+
+<section class="agentwelcome-card">
 	<h2><?php esc_html_e( 'Editor', 'agentwelcome' ); ?></h2>
 	<p class="agentwelcome-intro"><?php esc_html_e( 'Choose whether editors see AgentWelcome on the edit screen.', 'agentwelcome' ); ?></p>
 	<div class="agentwelcome-field">
