@@ -41,8 +41,8 @@ final class Generator {
 	/**
 	 * Renders a page and builds its Markdown.
 	 *
-	 * @param WP_Post                                    $post      The page.
-	 * @param array{selector?: string, strip?: string[]} $overrides Settings to use instead of the saved ones.
+	 * @param WP_Post                                                                   $post      The page.
+	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
 	 * @return GeneratedPage The Markdown and where it came from.
 	 */
 	public function generate( WP_Post $post, array $overrides = array() ): GeneratedPage {
@@ -52,7 +52,7 @@ final class Generator {
 	/**
 	 * Selector of the main content.
 	 *
-	 * @param array{selector?: string, strip?: string[]} $overrides Settings to use instead of the saved ones.
+	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
 	 * @return string The selector, or the default list when none is set.
 	 */
 	public function content_selector( array $overrides = array() ): string {
@@ -64,12 +64,12 @@ final class Generator {
 	/**
 	 * Text blocks of the content area, split into those kept and those removed by the exclusions.
 	 *
-	 * @param RenderResult                               $render    The rendered page.
-	 * @param array{selector?: string, strip?: string[]} $overrides Settings to use instead of the saved ones.
+	 * @param RenderResult                                                              $render    The rendered page.
+	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
 	 * @return array{kept: string[], excluded: string[]} The blocks of text.
 	 */
 	public function text_blocks( RenderResult $render, array $overrides = array() ): array {
-		$extractor = ! empty( $overrides['strip'] ) ? $this->extractor->with_extra( $overrides['strip'] ) : $this->extractor;
+		$extractor = ! empty( $overrides['strip'] ) || ! empty( $overrides['headings'] ) ? $this->extractor->with_extra( $overrides['strip'] ?? array(), $overrides['headings'] ?? array() ) : $this->extractor;
 
 		return $extractor->text_blocks( $render->html, $this->content_selector( $overrides ) );
 	}
@@ -77,15 +77,15 @@ final class Generator {
 	/**
 	 * Builds the Markdown from HTML that was already fetched.
 	 *
-	 * @param WP_Post                                    $post      The page.
-	 * @param RenderResult                               $render    The rendered page.
-	 * @param array{selector?: string, strip?: string[]} $overrides Settings to use instead of the saved ones.
+	 * @param WP_Post                                                                   $post      The page.
+	 * @param RenderResult                                                              $render    The rendered page.
+	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
 	 * @return GeneratedPage The Markdown and where it came from.
 	 */
 	public function build( WP_Post $post, RenderResult $render, array $overrides = array() ): GeneratedPage {
 		$url       = (string) $this->urls->permalink( $post );
 		$selector  = $this->content_selector( $overrides );
-		$extractor = ! empty( $overrides['strip'] ) ? $this->extractor->with_extra( $overrides['strip'] ) : $this->extractor;
+		$extractor = ! empty( $overrides['strip'] ) || ! empty( $overrides['headings'] ) ? $this->extractor->with_extra( $overrides['strip'] ?? array(), $overrides['headings'] ?? array() ) : $this->extractor;
 		$node      = $extractor->extract( $render->html, $selector, $url );
 		$body      = null === $node ? '' : $this->converter->convert( $node );
 		$title     = trim( html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES, 'UTF-8' ) );

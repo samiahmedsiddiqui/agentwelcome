@@ -55,6 +55,21 @@ $has_pass = '' !== (string) $options->get( 'http_auth_password', '' );
 			<p class="description"><?php esc_html_e( 'Also removed: elements with role="banner" or role="contentinfo", and any header or footer that is not inside an article, main or section element. Headers and footers inside an article are kept.', 'agentwelcome' ); ?></p>
 		</details>
 	</div>
+	<div class="agentwelcome-field">
+		<label for="agentwelcome-headings"><?php esc_html_e( 'Elements to write as headings', 'agentwelcome' ); ?></label>
+		<textarea id="agentwelcome-headings" name="<?php echo esc_attr( $name ); ?>[heading_selectors]" rows="3" class="large-text code" placeholder=".card-title => h3&#10;.hero-title => h2"><?php echo esc_textarea( (string) $options->get( 'heading_selectors', '' ) ); ?></textarea>
+		<p class="description"><?php esc_html_e( 'For titles that are not real headings in the page, such as a div with a title class. One rule per line: a CSS selector, then => and the level, h1 to h6. Every rule needs a level. Only the Markdown changes, not the page.', 'agentwelcome' ); ?></p>
+		<details class="agentwelcome-details" style="margin-top:10px">
+			<summary><?php esc_html_e( 'How headings are chosen', 'agentwelcome' ); ?></summary>
+			<ul style="list-style:disc;margin:8px 0 0 18px">
+				<li><?php esc_html_e( 'Real headings (h1 to h6) are never changed, and nothing is written as a heading unless you list it here.', 'agentwelcome' ); ?></li>
+				<li><?php esc_html_e( 'A link or emphasis that is the whole title is kept, for example ### [Title](url).', 'agentwelcome' ); ?></li>
+				<li><?php esc_html_e( 'An element that holds paragraphs, lists or other blocks is skipped.', 'agentwelcome' ); ?></li>
+				<li><?php esc_html_e( 'A span or other inline element is changed only when it is the whole text of its block, so a sentence is never split.', 'agentwelcome' ); ?></li>
+				<li><?php esc_html_e( 'The same selectors work as for excluding elements. Try a rule on the Verify & Preview page before saving it.', 'agentwelcome' ); ?></li>
+			</ul>
+		</details>
+	</div>
 </section>
 
 <section class="agentwelcome-card">

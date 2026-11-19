@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 $selector = $vars['selector'];
 $strip    = $vars['strip'];
+$headings = $vars['headings'];
 ?>
 <section class="agentwelcome-card" style="margin-top:20px">
 	<h2><?php esc_html_e( 'Check a page', 'agentwelcome' ); ?></h2>
@@ -20,7 +21,7 @@ $strip    = $vars['strip'];
 		<p>
 			<input type="text" class="large-text code" name="agentwelcome_verify_url" value="<?php echo esc_attr( $vars['url'] ); ?>" placeholder="<?php echo esc_attr( $vars['placeholder'] ); ?>" />
 		</p>
-		<details class="agentwelcome-details"<?php echo '' !== $selector || '' !== $strip ? ' open' : ''; ?>>
+		<details class="agentwelcome-details"<?php echo '' !== $selector || '' !== $strip || '' !== $headings ? ' open' : ''; ?>>
 			<summary><?php esc_html_e( 'Try different selectors without saving', 'agentwelcome' ); ?></summary>
 			<p>
 				<label for="agentwelcome-verify-selector"><?php esc_html_e( 'Content selector', 'agentwelcome' ); ?></label><br />
@@ -29,6 +30,10 @@ $strip    = $vars['strip'];
 			<p>
 				<label for="agentwelcome-verify-strip"><?php esc_html_e( 'Extra elements to exclude (one per line)', 'agentwelcome' ); ?></label><br />
 				<textarea id="agentwelcome-verify-strip" class="large-text code" rows="3" name="agentwelcome_verify_strip"><?php echo esc_textarea( $strip ); ?></textarea>
+			</p>
+			<p>
+				<label for="agentwelcome-verify-headings"><?php esc_html_e( 'Extra elements to write as headings (one per line, such as .card-title => h3)', 'agentwelcome' ); ?></label><br />
+				<textarea id="agentwelcome-verify-headings" class="large-text code" rows="3" name="agentwelcome_verify_headings"><?php echo esc_textarea( $headings ); ?></textarea>
 			</p>
 			<p class="description"><?php esc_html_e( 'Leave blank to use the saved settings. Nothing here is saved.', 'agentwelcome' ); ?></p>
 		</details>

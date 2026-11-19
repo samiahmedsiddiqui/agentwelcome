@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 final class Invalidator implements Hookable {
 
 	/** Settings that change how pages are rendered, so every copy must be rebuilt. */
-	private const RENDER_KEYS = array( 'content_selector', 'strip_selectors', 'http_auth_enabled', 'http_auth_user', 'http_auth_password' );
+	private const RENDER_KEYS = array( 'content_selector', 'strip_selectors', 'heading_selectors', 'http_auth_enabled', 'http_auth_user', 'http_auth_password' );
 	/** Settings that change which pages are served. */
 	private const SCOPE_KEYS = array( 'excluded_post_types', 'excluded_posts', 'excluded_terms' );
 

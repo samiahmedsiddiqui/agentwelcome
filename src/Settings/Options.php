@@ -33,6 +33,7 @@ final class Options {
 			'exclude_noindex'      => true,
 			'content_selector'     => '',
 			'strip_selectors'      => '',
+			'heading_selectors'    => '',
 			'show_meta_box'        => true,
 			'http_auth_enabled'    => false,
 			'http_auth_user'       => '',
