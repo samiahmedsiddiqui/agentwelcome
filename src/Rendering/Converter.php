@@ -20,9 +20,6 @@ final class Converter {
 	/** The start of a Markdown block: heading, list item, quote, table row, code fence or image. */
 	private const BLOCK_START = '/^(#|[-*+] |\d+[.)] |>|\||`{3}|!\[)/';
 
-	/** A block that is only an image. */
-	private const STANDALONE_IMAGE = '/^!\[([^\]]*)\]\([^)]*\)$/';
-
 	/** Heading, quote and bullet markers at the start of plain text. */
 	private const BLOCK_MARKER_ESCAPE = '/^(\s*)(#{1,6}(?=\s)|[>+-](?=\s))/';
 
@@ -247,7 +244,7 @@ final class Converter {
 	}
 
 	/**
-	 * Joins lone icon blocks to the text after them and drops images whose alt text repeats a neighbouring block.
+	 * Joins lone icon blocks to the text after them.
 	 *
 	 * @param string $markdown Converted text.
 	 * @return string Polished text.
@@ -265,29 +262,10 @@ final class Converter {
 				continue;
 			}
 
-			$alt = $this->standalone_alt( $block );
-
-			if ( null !== $alt && $this->repeats_neighbour( $alt, $kept, $blocks, $i ) ) {
-				continue;
-			}
-
 			$kept[] = $block;
 		}
 
 		return implode( "\n\n", $kept );
-	}
-
-	/**
-	 * Whether an image alt text only repeats the block before it or the block after it.
-	 *
-	 * @param string   $alt    Alt text of the image.
-	 * @param string[] $kept   Blocks kept so far.
-	 * @param string[] $blocks All blocks.
-	 * @param int      $index  Position of the image block in the list of all blocks.
-	 * @return bool True when it repeats a neighbour.
-	 */
-	private function repeats_neighbour( string $alt, array $kept, array $blocks, int $index ): bool {
-		return $this->same_text( $alt, (string) end( $kept ) ) || ( $index + 1 < count( $blocks ) && $this->same_text( $alt, $blocks[ $index + 1 ] ) );
 	}
 
 	/**
@@ -332,40 +310,6 @@ final class Converter {
 	 */
 	private function is_plain( string $block ): bool {
 		return 0 === preg_match( self::BLOCK_START, $block ) && ! in_array( $block, self::ICONS, true );
-	}
-
-	/**
-	 * Alt text of a block that is only an image.
-	 *
-	 * @param string $block A block.
-	 * @return string|null The alt text, or null when the block is not an image or has none.
-	 */
-	private function standalone_alt( string $block ): ?string {
-		return 1 === preg_match( self::STANDALONE_IMAGE, $block, $match ) && '' !== trim( $match[1] ) ? $match[1] : null;
-	}
-
-	/**
-	 * Whether two texts are the same once markup and case are ignored.
-	 *
-	 * @param string $first  First text.
-	 * @param string $second Second text.
-	 * @return bool True when they match and are not empty.
-	 */
-	private function same_text( string $first, string $second ): bool {
-		return $this->plain( $first ) === $this->plain( $second ) && '' !== $this->plain( $first );
-	}
-
-	/**
-	 * Reduces text to lower case words without heading marks or emphasis.
-	 *
-	 * @param string $text Text.
-	 * @return string The reduced text.
-	 */
-	private function plain( string $text ): string {
-		$text = (string) preg_replace( '/^#+\s+/', '', trim( $text ) );
-		$text = (string) preg_replace( '/[\\*_`]/', '', $text );
-
-		return strtolower( trim( (string) preg_replace( '/\s+/u', ' ', $text ) ) );
 	}
 
 	/**
@@ -544,7 +488,7 @@ final class Converter {
 	}
 
 	/**
-	 * Writes an image. Tracking pixels and images that only repeat nearby text are left out.
+	 * Writes an image. Tracking pixels are left out. An image with no alt text is named after its title, or after its file when the name is readable. An empty alt is kept for small images, which are decoration.
 	 *
 	 * @param DOMElement $element The img element.
 	 * @return string Markdown, or an empty string when the image is left out.
@@ -558,8 +502,9 @@ final class Converter {
 
 		$alt = trim( (string) preg_replace( '/\s+/', ' ', $element->getAttribute( 'alt' ) ) );
 
-		if ( $this->repeats_parent_text( $element, $alt ) ) {
-			return '';
+		if ( '' === $alt && ( ! $element->hasAttribute( 'alt' ) || $this->is_large( $element ) ) ) {
+			$title = trim( (string) preg_replace( '/\s+/', ' ', $element->getAttribute( 'title' ) ) );
+			$alt   = '' === $title ? $this->file_label( $src ) : $title;
 		}
 
 		$alt = str_replace( array( '[', ']' ), array( '\\[', '\\]' ), $alt );
@@ -568,34 +513,45 @@ final class Converter {
 	}
 
 	/**
-	 * Whether the nearest ancestor that has text, within a few levels, is a short label that already says the alt text.
+	 * Whether an image is big enough to be content, going by its width and height attributes.
 	 *
 	 * @param DOMElement $image Image element.
-	 * @param string     $alt   Alt text, cleaned.
-	 * @return bool True when the alt text adds nothing.
+	 * @return bool True when both sizes are given and at least 100.
 	 */
-	private function repeats_parent_text( DOMElement $image, string $alt ): bool {
-		if ( '' === $alt ) {
-			return false;
+	private function is_large( DOMElement $image ): bool {
+		$width  = $image->getAttribute( 'width' );
+		$height = $image->getAttribute( 'height' );
+
+		return ctype_digit( $width ) && ctype_digit( $height ) && (int) $width >= 100 && (int) $height >= 100;
+	}
+
+	/**
+	 * Turns the file name of an image into a label, or returns an empty string when the name would mean nothing to a reader.
+	 *
+	 * @param string $src Address of the image.
+	 * @return string The label, such as "team photo" for team-photo-300x200.jpg.
+	 */
+	private function file_label( string $src ): string {
+		$path = wp_parse_url( $src, PHP_URL_PATH );
+
+		if ( ! is_string( $path ) ) {
+			return '';
 		}
 
-		$ancestor = $image->parentNode;
+		$name = rawurldecode( pathinfo( $path, PATHINFO_FILENAME ) );
+		$name = (string) preg_replace( '/-(?:\d+x\d+|scaled|e\d{10,})$/', '', $name );
+		$name = trim( (string) preg_replace( '/[\s_-]+/', ' ', $name ) );
+		$text = (string) preg_replace( '/\s+/', '', $name );
 
-		for ( $level = 0; $level < 4 && $ancestor instanceof DOMElement; $level++ ) {
-			if ( in_array( strtolower( $ancestor->nodeName ), array( 'figure', 'body', 'main', 'article', 'section' ), true ) ) {
-				return false;
-			}
-
-			$text = $this->plain( $ancestor->textContent );
-
-			if ( '' !== $text ) {
-				return strlen( $text ) <= 80 && str_contains( $text, $this->plain( $alt ) );
-			}
-
-			$ancestor = $ancestor->parentNode;
+		if ( strlen( $text ) < 3 || 1 === preg_match( '/^[a-f0-9]{8,}$/i', $text ) ) {
+			return '';
 		}
 
-		return false;
+		if ( 1 === preg_match( '/^(?:screenshot|screen shot)\b/i', $name ) || 1 === preg_match( '/^(?:img|dsc|dscn|pxl|mvimg|vid|image|photo|picture|pic|untitled|download|unnamed|scan|wp)[\s\d.]*$/i', $name ) ) {
+			return '';
+		}
+
+		return preg_match_all( '/\p{L}/u', $text ) / max( 1, mb_strlen( $text ) ) >= 0.6 ? $name : '';
 	}
 
 	/**
