@@ -53,6 +53,7 @@ use AgentWelcome\Rendering\Converter;
 use AgentWelcome\Rendering\Extractor;
 use AgentWelcome\Rendering\FrontMatter;
 use AgentWelcome\Rendering\Generator;
+use AgentWelcome\Rendering\HeadingRules;
 use AgentWelcome\Rendering\Renderer;
 use AgentWelcome\Rendering\Selector;
 use AgentWelcome\Rest\LlmsController;
@@ -123,6 +124,10 @@ final class Plugin {
 				(array) apply_filters(
 					'agentwelcome_strip_selectors',
 					array_merge( Extractor::DEFAULT_STRIP, ( new Selector() )->parse_list( (string) $options->get( 'strip_selectors', '' ) )['valid'] )
+				),
+				(array) apply_filters(
+					'agentwelcome_heading_selectors',
+					( new HeadingRules( new Selector() ) )->parse( (string) $options->get( 'heading_selectors', '' ) )['valid']
 				)
 			),
 			new Converter(),

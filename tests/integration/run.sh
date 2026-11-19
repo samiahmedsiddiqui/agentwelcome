@@ -30,6 +30,7 @@ run "capability" python3 capability_test.py
 run "hardening" python3 hardening_test.py
 run "basic auth and cron" python3 basicauth_test.py
 run "description" python3 description_test.py
+run "headings" python3 headings_test.py
 run "homepage url" python3 homepage_test.py
 run "subdirectory" python3 subdir_test.py
 run "uninstall" python3 uninstall_test.py

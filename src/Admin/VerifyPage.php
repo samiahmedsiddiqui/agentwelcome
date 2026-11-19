@@ -14,6 +14,7 @@ use AgentWelcome\Cache\PageCache;
 use AgentWelcome\Contracts\Hookable;
 use AgentWelcome\Environment\Environment;
 use AgentWelcome\Http\Urls;
+use AgentWelcome\Rendering\HeadingRules;
 use AgentWelcome\Rendering\RenderResult;
 use AgentWelcome\Rendering\Selector;
 use AgentWelcome\Verify\Scan;
@@ -123,12 +124,14 @@ final class VerifyPage implements Hookable {
 		$url      = '';
 		$selector = '';
 		$strip    = '';
+		$headings = '';
 
 		if ( isset( $_POST['agentwelcome_verify_url'] ) ) {
 			check_admin_referer( self::NONCE );
 			$url      = trim( sanitize_text_field( wp_unslash( $_POST['agentwelcome_verify_url'] ) ) );
 			$selector = isset( $_POST['agentwelcome_verify_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['agentwelcome_verify_selector'] ) ) : '';
 			$strip    = isset( $_POST['agentwelcome_verify_strip'] ) ? sanitize_textarea_field( wp_unslash( $_POST['agentwelcome_verify_strip'] ) ) : '';
+			$headings = isset( $_POST['agentwelcome_verify_headings'] ) ? sanitize_textarea_field( wp_unslash( $_POST['agentwelcome_verify_headings'] ) ) : '';
 		} elseif ( isset( $_GET['url'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check, nothing is changed.
 			$url = trim( sanitize_text_field( wp_unslash( $_GET['url'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check, nothing is changed.
 		}
@@ -141,12 +144,13 @@ final class VerifyPage implements Hookable {
 				'url'         => $url,
 				'selector'    => $selector,
 				'strip'       => $strip,
+				'headings'    => $headings,
 				'placeholder' => home_url( '/' ),
 			)
 		);
 
 		if ( '' !== $url ) {
-			$this->result( $url, $selector, $strip );
+			$this->result( $url, $selector, $strip, $headings );
 		}
 	}
 
@@ -234,9 +238,10 @@ final class VerifyPage implements Hookable {
 	 * @param string $url      Address of the page.
 	 * @param string $selector Content selectors to try for this check only.
 	 * @param string $strip    Selectors of parts to remove for this check only.
+	 * @param string $headings Selectors with a heading level, to write as headings for this check only.
 	 * @return void
 	 */
-	private function result( string $url, string $selector, string $strip ): void {
+	private function result( string $url, string $selector, string $strip, string $headings ): void {
 		$post = $this->urls->resolve_url( $url );
 
 		if ( ! $post instanceof WP_Post ) {
@@ -248,6 +253,7 @@ final class VerifyPage implements Hookable {
 		$overrides = array();
 		$content   = implode( ', ', $selectors->parse_list( $selector )['valid'] );
 		$extra     = $selectors->parse_list( $strip )['valid'];
+		$levels    = ( new HeadingRules( $selectors ) )->parse( $headings )['valid'];
 
 		if ( '' !== $content ) {
 			$overrides['selector'] = $content;
@@ -255,6 +261,10 @@ final class VerifyPage implements Hookable {
 
 		if ( ! empty( $extra ) ) {
 			$overrides['strip'] = $extra;
+		}
+
+		if ( ! empty( $levels ) ) {
+			$overrides['headings'] = $levels;
 		}
 
 		if ( ! empty( $overrides ) ) {

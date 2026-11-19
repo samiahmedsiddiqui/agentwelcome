@@ -36,9 +36,9 @@ final class Verifier {
 	/**
 	 * Renders the page, builds its Markdown and compares it with the stored copy.
 	 *
-	 * @param WP_Post                                    $post      The page.
-	 * @param array{selector?: string, strip?: string[]} $overrides Settings to use instead of the saved ones.
-	 * @param bool                                       $coverage  Also check the page text against the Markdown.
+	 * @param WP_Post                                                                   $post      The page.
+	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
+	 * @param bool                                                                      $coverage  Also check the page text against the Markdown.
 	 * @return VerifyResult The outcome.
 	 */
 	public function verify( WP_Post $post, array $overrides = array(), bool $coverage = true ): VerifyResult {

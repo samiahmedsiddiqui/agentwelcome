@@ -85,7 +85,7 @@ def clear_env():
 
 def reset_state():
     clear_env()
-    php('foreach ( get_posts( array( "post_type" => "any", "post_status" => "any", "numberposts" => -1 ) ) as $p ) { if ( preg_match( "/^(cache|fallback|gate|dbg|list|rest|bulk)-probe|^(desc|verify|scan|llms|integ|nc|hard)-/", $p->post_name ) ) { wp_delete_post( $p->ID, true ); } }')
+    php('foreach ( get_posts( array( "post_type" => "any", "post_status" => "any", "numberposts" => -1 ) ) as $p ) { if ( preg_match( "/^(cache|fallback|gate|dbg|list|rest|bulk|heading)-probe|^(desc|verify|scan|llms|integ|nc|hard)-/", $p->post_name ) ) { wp_delete_post( $p->ID, true ); } }')
     wpcli("option", "delete", "agentwelcome_settings")
     wpcli("option", "delete", "agentwelcome_llms")
     wpcli("option", "delete", "agentwelcome_changes")

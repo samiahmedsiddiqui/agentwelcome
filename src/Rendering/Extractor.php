@@ -65,22 +65,25 @@ final class Extractor {
 	private const LAZY_ATTRIBUTES = array( 'data-src', 'data-lazy-src', 'data-original' );
 
 	/**
-	 * @param Selector $selector Converts selectors to XPath.
-	 * @param string[] $strip    Selectors of elements to remove.
+	 * @param Selector           $selector Converts selectors to XPath.
+	 * @param string[]           $strip    Selectors of elements to remove.
+	 * @param array<string, int> $headings Heading level by selector, for elements that are written as headings.
 	 */
 	public function __construct(
 		private Selector $selector,
-		private array $strip = self::DEFAULT_STRIP
+		private array $strip = self::DEFAULT_STRIP,
+		private array $headings = array()
 	) {}
 
 	/**
-	 * Makes a copy that removes more elements.
+	 * Makes a copy that removes more elements and writes more elements as headings.
 	 *
-	 * @param string[] $selectors Extra selectors of elements to remove.
+	 * @param string[]           $selectors Extra selectors of elements to remove.
+	 * @param array<string, int> $headings  Extra heading levels by selector.
 	 * @return self The new extractor.
 	 */
-	public function with_extra( array $selectors ): self {
-		return new self( $this->selector, array_merge( $this->strip, $selectors ) );
+	public function with_extra( array $selectors, array $headings = array() ): self {
+		return new self( $this->selector, array_merge( $this->strip, $selectors ), array_merge( $this->headings, $headings ) );
 	}
 
 	/**
@@ -106,6 +109,7 @@ final class Extractor {
 		}
 
 		$this->strip( $xpath, $node );
+		$this->promote( $xpath, $node );
 		$this->prepare_media( $xpath, $node );
 		$this->absolutize( $xpath, $node, $base_url );
 
@@ -353,6 +357,121 @@ final class Extractor {
 		foreach ( $document as $query ) {
 			$this->remove( $xpath->query( $query ), $root );
 		}
+	}
+
+	/**
+	 * Writes the elements chosen in the settings as headings. Headings, and elements that hold other blocks, are left as they are.
+	 *
+	 * @param DOMXPath   $xpath Query object for the document.
+	 * @param DOMElement $root  Content area.
+	 * @return void
+	 */
+	private function promote( DOMXPath $xpath, DOMElement $root ): void {
+		foreach ( $this->headings as $selector => $level ) {
+			foreach ( $this->selector->to_xpaths( (string) $selector ) as $query ) {
+				$nodes = $xpath->query( $query );
+
+				foreach ( false === $nodes ? array() : iterator_to_array( $nodes ) as $node ) {
+					if ( $node instanceof DOMElement && $node !== $root && $this->is_inside( $node, $root ) ) {
+						$this->make_heading( $xpath->document, $node, $level );
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Writes one element as a heading, keeping a link or emphasis that is the whole text.
+	 *
+	 * @param DOMDocument $document The document.
+	 * @param DOMElement  $element  The element.
+	 * @param int         $level    Heading level, 1 to 6.
+	 * @return void
+	 */
+	private function make_heading( DOMDocument $document, DOMElement $element, int $level ): void {
+		if ( ! $element->parentNode instanceof DOMElement || $this->in_heading( $element ) || $this->has_blocks( $element ) ) {
+			return;
+		}
+
+		$text   = $this->text_of( $element );
+		$target = $element;
+
+		while ( '' !== $text && $this->is_inline( $target ) && $target->parentNode instanceof DOMElement && $this->is_inline( $target->parentNode ) && $this->text_of( $target->parentNode ) === $text ) {
+			$target = $target->parentNode;
+		}
+
+		$parent = $target->parentNode;
+
+		if ( '' === $text || ! $parent instanceof DOMElement || ( $this->is_inline( $target ) && $this->text_of( $parent ) !== $text ) ) {
+			return;
+		}
+
+		$heading = $document->createElement( 'h' . $level );
+
+		if ( $this->is_inline( $target ) ) {
+			$parent->replaceChild( $heading, $target );
+			$heading->appendChild( $target );
+
+			return;
+		}
+
+		while ( $target->childNodes->length > 0 ) {
+			$heading->appendChild( $target->childNodes->item( 0 ) );
+		}
+
+		$parent->replaceChild( $heading, $target );
+	}
+
+	/**
+	 * Whether an element is a heading or sits inside one.
+	 *
+	 * @param DOMElement $element The element.
+	 * @return bool True when it is part of a heading.
+	 */
+	private function in_heading( DOMElement $element ): bool {
+		for ( $node = $element; $node instanceof DOMElement; $node = $node->parentNode ) {
+			if ( 1 === preg_match( '/^h[1-6]$/', strtolower( $node->nodeName ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether an element holds anything that is not inline, such as a paragraph or a list.
+	 *
+	 * @param DOMElement $element The element.
+	 * @return bool True when it holds a block.
+	 */
+	private function has_blocks( DOMElement $element ): bool {
+		foreach ( $element->getElementsByTagName( '*' ) as $child ) {
+			if ( ! in_array( strtolower( $child->nodeName ), self::INLINE_TAGS, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether an element stays inside a line of text.
+	 *
+	 * @param DOMElement $element The element.
+	 * @return bool True for inline elements.
+	 */
+	private function is_inline( DOMElement $element ): bool {
+		return in_array( strtolower( $element->nodeName ), self::INLINE_TAGS, true );
+	}
+
+	/**
+	 * Text of an element with the spaces tidied.
+	 *
+	 * @param DOMElement $element The element.
+	 * @return string The text.
+	 */
+	private function text_of( DOMElement $element ): string {
+		return trim( (string) preg_replace( '/\s+/u', ' ', $element->textContent ) );
 	}
 
 	/**

@@ -12,6 +12,7 @@ namespace AgentWelcome\Settings;
 use AgentWelcome\Content\PostTypes;
 use AgentWelcome\Environment\Environment;
 use AgentWelcome\Http\Urls;
+use AgentWelcome\Rendering\HeadingRules;
 use AgentWelcome\Rendering\Selector;
 
 defined( 'ABSPATH' ) || exit;
@@ -48,8 +49,10 @@ final class Sanitizer {
 		$selectors = new Selector();
 		$content   = $selectors->parse_list( isset( $input['content_selector'] ) ? sanitize_text_field( $input['content_selector'] ) : '' );
 		$strip     = $selectors->parse_list( isset( $input['strip_selectors'] ) ? sanitize_textarea_field( $input['strip_selectors'] ) : '' );
+		$rules     = new HeadingRules( $selectors );
+		$headings  = $rules->parse( isset( $input['heading_selectors'] ) ? sanitize_textarea_field( $input['heading_selectors'] ) : '' );
 
-		$this->report_invalid( array_merge( $content['invalid'], $strip['invalid'] ) );
+		$this->report_invalid( array_merge( $content['invalid'], $strip['invalid'], $headings['invalid'] ) );
 
 		$post_types = isset( $input['excluded_post_types'] ) && is_array( $input['excluded_post_types'] )
 			? array_values( array_intersect( $this->post_types->available(), array_map( 'sanitize_key', $input['excluded_post_types'] ) ) )
@@ -67,6 +70,7 @@ final class Sanitizer {
 				'exclude_noindex'      => ! empty( $input['exclude_noindex'] ),
 				'content_selector'     => implode( ', ', $content['valid'] ),
 				'strip_selectors'      => implode( "\n", $strip['valid'] ),
+				'heading_selectors'    => $rules->to_text( $headings['valid'] ),
 				'show_meta_box'        => ! empty( $input['show_meta_box'] ),
 				'http_auth_enabled'    => ! empty( $input['http_auth_enabled'] ),
 				'allowed_environments' => isset( $input['allowed_environments'] ) && is_array( $input['allowed_environments'] )
@@ -112,8 +116,8 @@ final class Sanitizer {
 			'agentwelcome_invalid_selector',
 			sprintf(
 				/* translators: %s: list of CSS selectors. */
-				__( 'These selectors are not supported and were ignored: %s', 'agentwelcome' ),
-				implode( ', ', $invalid )
+				__( 'These selectors are not supported, or have no heading level such as => h3, and were ignored: %s', 'agentwelcome' ),
+				esc_html( implode( ', ', $invalid ) )
 			),
 			'warning'
 		);
