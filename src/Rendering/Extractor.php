@@ -61,7 +61,7 @@ final class Extractor {
 	/** Elements that stay inside a line of text. */
 	private const INLINE_TAGS = array( 'a', 'abbr', 'b', 'bdi', 'bdo', 'cite', 'code', 'data', 'del', 'dfn', 'em', 'font', 'i', 'img', 'ins', 'kbd', 'label', 'mark', 'q', 's', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var', 'wbr', 'br' );
 
-	/** Attributes where lazy-loading scripts keep the real image address. */
+	/** Attributes where lazy-loading scripts keep the real address of an image, frame or video. */
 	private const LAZY_ATTRIBUTES = array( 'data-src', 'data-lazy-src', 'data-original' );
 
 	/**
@@ -396,14 +396,14 @@ final class Extractor {
 	}
 
 	/**
-	 * Replaces the address of lazy-loaded images with the real one, which lazy-loading scripts keep in a data attribute while src holds a placeholder.
+	 * Replaces the address of lazy-loaded images, frames and videos with the real one, which lazy-loading scripts keep in a data attribute while src holds a placeholder.
 	 *
 	 * @param DOMXPath   $xpath Query object for the document.
 	 * @param DOMElement $root  Content area.
 	 * @return void
 	 */
 	private function prepare_media( DOMXPath $xpath, DOMElement $root ): void {
-		$images = $xpath->query( './/img', $root );
+		$images = $xpath->query( './/img | .//iframe | .//video', $root );
 
 		foreach ( false === $images ? array() : $images as $image ) {
 			if ( ! $image instanceof DOMElement ) {
