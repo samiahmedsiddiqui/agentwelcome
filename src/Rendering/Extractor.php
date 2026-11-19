@@ -396,7 +396,7 @@ final class Extractor {
 	}
 
 	/**
-	 * Copies the real image address from a lazy-loading attribute when the image has no usable address.
+	 * Replaces the address of lazy-loaded images with the real one, which lazy-loading scripts keep in a data attribute while src holds a placeholder.
 	 *
 	 * @param DOMXPath   $xpath Query object for the document.
 	 * @param DOMElement $root  Content area.
@@ -410,16 +410,10 @@ final class Extractor {
 				continue;
 			}
 
-			$src = trim( $image->getAttribute( 'src' ) );
-
-			if ( '' !== $src && 0 !== strpos( $src, 'data:' ) ) {
-				continue;
-			}
-
 			foreach ( self::LAZY_ATTRIBUTES as $attribute ) {
 				$lazy = trim( $image->getAttribute( $attribute ) );
 
-				if ( '' !== $lazy ) {
+				if ( '' !== $lazy && 0 !== strpos( $lazy, 'data:' ) ) {
 					$image->setAttribute( 'src', $lazy );
 					break;
 				}
