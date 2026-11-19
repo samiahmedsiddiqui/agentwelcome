@@ -624,7 +624,43 @@ final class Converter {
 
 		$title = trim( $element->getAttribute( 'title' ) );
 
+		list( $src, $label ) = $this->video_page( $src, $label );
+
 		return $this->block( '[' . ( '' === $title ? $label : $this->escape( $title ) ) . '](' . $this->destination( $src ) . ')' );
+	}
+
+	/**
+	 * Swaps the player address of a YouTube or Vimeo embed for the address of the video page.
+	 *
+	 * @param string $src   Address of the embedded frame.
+	 * @param string $label Link text to use when nothing better is known.
+	 * @return array{string, string} The address and the link text.
+	 */
+	private function video_page( string $src, string $label ): array {
+		$parts = wp_parse_url( $src );
+		$host  = is_array( $parts ) && isset( $parts['host'] ) ? strtolower( (string) preg_replace( '/^www\./i', '', $parts['host'] ) ) : '';
+		$path  = is_array( $parts ) && isset( $parts['path'] ) ? $parts['path'] : '';
+		$query = array();
+
+		if ( is_array( $parts ) && isset( $parts['query'] ) ) {
+			parse_str( $parts['query'], $query );
+		}
+
+		if ( in_array( $host, array( 'youtube.com', 'youtube-nocookie.com' ), true ) && 1 === preg_match( '#^/embed/([\w-]+)/?$#', $path, $match ) ) {
+			if ( 'videoseries' === $match[1] && isset( $query['list'] ) && is_string( $query['list'] ) ) {
+				return array( 'https://www.youtube.com/playlist?list=' . rawurlencode( $query['list'] ), 'YouTube playlist' );
+			}
+
+			return array( 'https://www.youtube.com/watch?v=' . $match[1], 'YouTube video' );
+		}
+
+		if ( 'player.vimeo.com' === $host && 1 === preg_match( '#^/video/(\d+)/?$#', $path, $match ) ) {
+			$hash = isset( $query['h'] ) && is_string( $query['h'] ) && 1 === preg_match( '/^\w+$/', $query['h'] ) ? '/' . $query['h'] : '';
+
+			return array( 'https://vimeo.com/' . $match[1] . $hash, 'Vimeo video' );
+		}
+
+		return array( $src, $label );
 	}
 
 	/**
