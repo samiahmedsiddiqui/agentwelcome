@@ -50,7 +50,13 @@ check("an element with blocks is skipped", "One" in md and "Two" in md and "### 
 print("--- changing the rules marks stored pages stale")
 check("stored copy is fresh", row(pid) is not None and row(pid)["state"] == "fresh")
 save(".egs-title => h4")
-check("stored copy is marked stale", row(pid)["state"] == "stale", str(row(pid)))
+after = row(pid)
+check("stored copy is marked stale, or already refreshed with the new level", after["state"] == "stale" or "#### Why us" in after["markdown"], str(after)[:300])
+for _ in range(20):
+    if "#### Why us" in markdown("heading-probe")[2]:
+        break
+    time.sleep(1)
+check("the page follows the new level", "#### Why us" in markdown("heading-probe")[2])
 
 print("--- the Verify override")
 page = admin.get("/wp-admin/admin.php?page=agentwelcome-verify")[2]
