@@ -1,6 +1,11 @@
-# AgentWelcome – llms.txt & Markdown for AI Agents
+<p align="center"><img src="https://raw.githubusercontent.com/samiahmedsiddiqui/agentwelcome/main/.github/assets/banner.png" alt="AgentWelcome" width="100%"></p>
 
-A WordPress plugin that serves an `llms.txt` index and a clean Markdown version of every page, so AI agents can read your content.
+Serves an llms.txt index and a clean Markdown version of every page, so AI agents can read your content.
+
+[![Version](https://img.shields.io/wordpress/plugin/v/agentwelcome)](https://wordpress.org/plugins/agentwelcome/)
+[![Tests](https://github.com/samiahmedsiddiqui/agentwelcome/actions/workflows/phpunit-tests.yml/badge.svg)](https://github.com/samiahmedsiddiqui/agentwelcome/actions/workflows/phpunit-tests.yml)
+[![Licence](https://img.shields.io/github/license/samiahmedsiddiqui/agentwelcome)](LICENSE)
+[![Downloads](https://img.shields.io/wordpress/plugin/dt/agentwelcome)](https://wordpress.org/plugins/agentwelcome/)
 
 The Markdown is built from the rendered page, so ACF fields, Gutenberg blocks, Elementor layouts and classic editor content are all included, whatever the theme.
 
@@ -24,7 +29,7 @@ The Markdown is built from the rendered page, so ACF fields, Gutenberg blocks, E
 - PHP 8.0+ with the DOM extension, WordPress 6.0+.
 - **Pretty permalinks.** Plain permalinks (`?p=123`) are not supported. Nothing is served for them and no Markdown is generated for URLs that contain a query string.
 
-## Installation
+## Install
 
 Composer:
 
@@ -33,6 +38,16 @@ composer require wpackagist-plugin/agentwelcome
 ```
 
 Or copy the plugin folder to `wp-content/plugins/agentwelcome` and activate it.
+
+## Usage
+
+- `/llms.txt` lists your pages for AI agents. `/llms-full.txt` is optional and holds every page in one file.
+- Every page has a Markdown version at its address plus `.md`, for example `/about.md`. The homepage is `/index.md`.
+- Open Verify & Preview in the admin menu to check a page against its stored Markdown.
+
+## Options
+
+Settings are under AgentWelcome in the admin menu: which post types and pages to leave out, the content area, elements to remove or write as headings, the `llms.txt` mode, the environments it runs in, and HTTP Basic credentials. See [Settings and pages](docs/settings.md).
 
 ## Documentation
 
