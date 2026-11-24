@@ -3,6 +3,8 @@ name: Deploy to WordPress.org
 on:
   release:
     types: [ published ]
+  push:
+    branches: [ "add-release-workflow" ]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -29,7 +31,8 @@ jobs:
 
     env:
       SLUG: agentwelcome
-      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+      # Only a published release, or a manual run with the dry run unticked, deploys for real.
+      DRY_RUN: ${{ (github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)) && 'false' || 'true' }}
 
     steps:
       - name: Checkout repository
@@ -60,8 +63,9 @@ jobs:
         id: deploy
         uses: 10up/action-wordpress-plugin-deploy@54bd289b8525fd23a5c365ec369185f2966529c2 # 2.3.0
         env:
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          # A dry run never commits, so it can run before the secrets are set.
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME || 'dry-run' }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD || 'dry-run' }}
           VERSION: ${{ steps.version.outputs.number }}
           BUILD_DIR: dist
           ASSETS_DIR: .wordpress-org
