@@ -56,12 +56,27 @@ jobs:
           [[ -z "$tag" || "$tag" == "$header" ]] || { echo "::error::The release tag must match the plugin version."; exit 1; }
           echo "number=${header}" >> "$GITHUB_OUTPUT"
 
+      # A version that is already in the plugin directory is never deployed again.
+      - name: Check the plugin directory
+        id: directory
+        env:
+          VERSION: ${{ steps.version.outputs.number }}
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://plugins.svn.wordpress.org/${SLUG}/tags/${VERSION}/")
+          case "$code" in
+            200) echo "Version ${VERSION} is already on WordPress.org, nothing to deploy."; echo "exists=true" >> "$GITHUB_OUTPUT" ;;
+            404) echo "Version ${VERSION} is new." ;;
+            *) echo "::error::Could not check the plugin directory (HTTP ${code})."; exit 1 ;;
+          esac
+
       # Ship only what the release zip holds: the repository without the export-ignored files.
       - name: Build the plugin
+        if: steps.directory.outputs.exists != 'true'
         run: git archive --format=tar --prefix=dist/ HEAD | tar -x
 
       - name: Deploy to WordPress.org
         id: deploy
+        if: steps.directory.outputs.exists != 'true'
         uses: 10up/action-wordpress-plugin-deploy@54bd289b8525fd23a5c365ec369185f2966529c2 # 2.3.0
         env:
           # A dry run never commits, so it can run before the secrets are set.
@@ -75,7 +90,7 @@ jobs:
           dry-run: ${{ env.DRY_RUN }}
 
       - name: Attach the zip to the release
-        if: github.event_name == 'release' && env.DRY_RUN != 'true'
+        if: github.event_name == 'release' && env.DRY_RUN != 'true' && steps.directory.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
