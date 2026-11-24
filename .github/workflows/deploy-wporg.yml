@@ -3,6 +3,9 @@ name: Deploy to WordPress.org
 on:
   release:
     types: [ published ]
+  # A pull request that changes this file runs a dry run, so the workflow is tested before it is merged.
+  pull_request:
+    paths: [ ".github/workflows/deploy-wporg.yml" ]
   workflow_dispatch:
     inputs:
       dry_run:
