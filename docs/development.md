@@ -27,4 +27,4 @@ Releases go to the WordPress.org plugin directory from GitHub, with `.github/wor
 2. Merge to `main`, then publish a GitHub release whose tag is that version, for example `1.0.0`.
 3. The workflow checks that the tag, header and stable tag match, builds the plugin without the export-ignored files, commits `trunk`, the new tag and the `.wordpress-org` assets to the SVN repository, and attaches the zip to the release.
 
-Set these once, in Settings, Environments, `wordpress-org`: the secrets `SVN_USERNAME` and `SVN_PASSWORD` (the WordPress.org account that owns the plugin) and, if you want an approval before each deploy, required reviewers. To try it without publishing, run the workflow by hand from the Actions tab. A manual run is a dry run unless you untick the option.
+The deploy needs the secrets `SVN_USERNAME` and `SVN_PASSWORD` in the `wordpress-org` environment of the repository settings.
