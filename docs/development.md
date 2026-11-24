@@ -18,3 +18,13 @@ Every pull request runs these checks plus [Plugin Check](https://github.com/Word
 ## How this plugin is developed
 
 Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every change is reviewed by the author and checked with automated tests, PHPCS, PHPStan and Plugin Check before release.
+
+## Releasing
+
+Releases go to the WordPress.org plugin directory from GitHub, with `.github/workflows/deploy-wporg.yml`.
+
+1. Set the same version in the plugin header and in the readme's `Stable tag`, and add its changelog entry.
+2. Merge to `main`, then publish a GitHub release whose tag is that version, for example `1.0.0`.
+3. The workflow checks that the tag, header and stable tag match, builds the plugin without the export-ignored files, commits `trunk`, the new tag and the `.wordpress-org` assets to the SVN repository, and attaches the zip to the release.
+
+The deploy needs the secrets `SVN_USERNAME` and `SVN_PASSWORD` in the `wordpress-org` environment of the repository settings.

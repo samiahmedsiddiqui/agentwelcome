@@ -1,0 +1,83 @@
+name: Deploy to WordPress.org
+
+on:
+  release:
+    types: [ published ]
+  # A pull request that changes this file runs a dry run, so the workflow is tested before it is merged.
+  pull_request:
+    paths: [ ".github/workflows/deploy-wporg.yml" ]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: build and check everything but do not commit to WordPress.org"
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-wporg
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  deploy:
+    name: Deploy to the plugin directory
+    runs-on: ubuntu-latest
+    # Holds the SVN secrets. Add required reviewers to this environment to approve each deploy.
+    environment: wordpress-org
+
+    permissions:
+      # Lets the job attach the plugin zip to the release.
+      contents: write
+
+    env:
+      SLUG: agentwelcome
+      # Only a published release, or a manual run with the dry run unticked, deploys for real.
+      DRY_RUN: ${{ (github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)) && 'false' || 'true' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
+
+      # The version is read from the plugin, and a release must be tagged with the same number.
+      - name: Check the version
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          header=$(sed -n 's/^ \* Version:[[:space:]]*//p' "${SLUG}.php" | tr -d '[:space:]')
+          stable=$(sed -n 's/^Stable tag:[[:space:]]*//p' readme.txt | tr -d '[:space:]')
+          tag="${RELEASE_TAG#v}"
+          echo "Plugin header: ${header}, stable tag: ${stable}, release tag: ${tag:-none}"
+          [[ -n "$header" && "$header" == "$stable" ]] || { echo "::error::The plugin header and the readme stable tag must match."; exit 1; }
+          [[ -z "$tag" || "$tag" == "$header" ]] || { echo "::error::The release tag must match the plugin version."; exit 1; }
+          echo "number=${header}" >> "$GITHUB_OUTPUT"
+
+      # Ship only what the release zip holds: the repository without the export-ignored files.
+      - name: Build the plugin
+        run: git archive --format=tar --prefix=dist/ HEAD | tar -x
+
+      - name: Deploy to WordPress.org
+        id: deploy
+        uses: 10up/action-wordpress-plugin-deploy@54bd289b8525fd23a5c365ec369185f2966529c2 # 2.3.0
+        env:
+          # A dry run never commits, so it can run before the secrets are set.
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME || 'dry-run' }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD || 'dry-run' }}
+          VERSION: ${{ steps.version.outputs.number }}
+          BUILD_DIR: dist
+          ASSETS_DIR: .wordpress-org
+        with:
+          generate-zip: true
+          dry-run: ${{ env.DRY_RUN }}
+
+      - name: Attach the zip to the release
+        if: github.event_name == 'release' && env.DRY_RUN != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          ZIP_PATH: ${{ steps.deploy.outputs.zip-path }}
+        run: gh release upload "$RELEASE_TAG" "$ZIP_PATH" --clobber --repo "$GITHUB_REPOSITORY"
