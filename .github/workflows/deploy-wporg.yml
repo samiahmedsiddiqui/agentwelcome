@@ -3,8 +3,6 @@ name: Deploy to WordPress.org
 on:
   release:
     types: [ published ]
-  push:
-    branches: [ "add-release-workflow" ]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -71,6 +69,7 @@ jobs:
           ASSETS_DIR: .wordpress-org
         with:
           generate-zip: true
+          dry-run: ${{ env.DRY_RUN }}
 
       - name: Attach the zip to the release
         if: github.event_name == 'release' && env.DRY_RUN != 'true'
