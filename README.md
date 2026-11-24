@@ -31,6 +31,8 @@ The Markdown is built from the rendered page, so ACF fields, Gutenberg blocks, E
 
 ## Install
 
+From the [WordPress.org plugin directory](https://wordpress.org/plugins/agentwelcome/): in the admin go to Plugins, Add New, and search for AgentWelcome. Questions and help go to the [support forum](https://wordpress.org/support/plugin/agentwelcome/).
+
 Composer:
 
 ```bash
