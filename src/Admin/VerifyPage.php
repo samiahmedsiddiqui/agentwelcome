@@ -17,6 +17,7 @@ use AgentWelcome\Http\Urls;
 use AgentWelcome\Rendering\HeadingRules;
 use AgentWelcome\Rendering\RenderResult;
 use AgentWelcome\Rendering\Selector;
+use AgentWelcome\Robots\CrawlerCheck;
 use AgentWelcome\Verify\Scan;
 use AgentWelcome\Verify\Verifier;
 use AgentWelcome\Verify\VerifyResult;
@@ -36,13 +37,14 @@ final class VerifyPage implements Hookable {
 	private const SCAN_NONCE = 'agentwelcome_scan';
 
 	/**
-	 * @param Urls        $urls        Finds the page for an address.
-	 * @param Verifier    $verifier    Compares one page.
-	 * @param Notices     $notices     Notices to show.
-	 * @param Scan        $scan        Scan of all pages.
-	 * @param Batch       $batch       Generates missing copies.
-	 * @param PageCache   $pages       Queues refreshes.
-	 * @param Environment $environment Tells whether the plugin is running on this site.
+	 * @param Urls         $urls        Finds the page for an address.
+	 * @param Verifier     $verifier    Compares one page.
+	 * @param Notices      $notices     Notices to show.
+	 * @param Scan         $scan        Scan of all pages.
+	 * @param Batch        $batch       Generates missing copies.
+	 * @param PageCache    $pages       Queues refreshes.
+	 * @param Environment  $environment Tells whether the plugin is running on this site.
+	 * @param CrawlerCheck $crawlers    Finds the AI crawlers that robots.txt blocks.
 	 */
 	public function __construct(
 		private Urls $urls,
@@ -51,7 +53,8 @@ final class VerifyPage implements Hookable {
 		private Scan $scan,
 		private Batch $batch,
 		private PageCache $pages,
-		private Environment $environment
+		private Environment $environment,
+		private CrawlerCheck $crawlers
 	) {}
 
 	/**
@@ -110,6 +113,7 @@ final class VerifyPage implements Hookable {
 					'all' => array( __( 'All pages', 'agentwelcome' ), self::url( array( 'tab' => 'all' ) ) ),
 				),
 				'notices' => $this->notices->data(),
+				'blocked' => $this->crawlers->blocked(),
 				'content' => 'all' === $tab ? array( $this, 'render_all' ) : array( $this, 'render_one' ),
 			)
 		);
