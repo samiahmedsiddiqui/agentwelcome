@@ -25,6 +25,12 @@ Works with default WordPress permalinks and with the [Custom Permalinks](https:/
 3. The page is fetched from its own public URL as a logged-out visitor, so theme templates, ACF output and page builders are included. If that fails, the post content is used instead.
 4. The main content is selected (`main`, `[role="main"]`, `#content`, `#main`, `.site-content`, `article`, then `body`). Navigation, sidebars, forms, scripts, hidden elements and site-level headers and footers are removed. Headers and footers inside an `article`, `main` or `section` are kept. The result is converted to Markdown with a metadata header.
 
+## Markdown by Accept header
+
+Off by default. Turn on **Return Markdown when a client asks for it** under AgentWelcome > Settings > Content > Accept header. A GET or HEAD request for a normal page address (no `.md`) whose `Accept` header ranks `text/markdown` above `text/html` then gets the same stored Markdown as the `.md` address. The `q` values are read, so `text/html, text/markdown;q=0.5`, `*/*`, `text/*` and a missing header still get the HTML page, and so does a tie.
+
+The answer sends `Vary: Accept`, `Cache-Control: private, no-store` (not the public 5 minute header of the `.md` address) and a canonical `Link` header to the HTML page, because many CDNs and page caches ignore `Vary`. It is only used for singular pages that are served as Markdown. Pages that are excluded, not served or not stored yet, and requests for the admin, REST, AJAX, feeds, previews and searches, are answered by WordPress as usual, with no 404.
+
 ## noindex pages
 
 By default, pages that Yoast SEO, Rank Math, All in One SEO, SEOPress or The SEO Framework mark as noindex are left out of `llms.txt`, `llms-full.txt` and the `.md` files (the `.md` URL then gets the 404 described below), and their stored copy is removed. Only the page's own setting counts, not the rules of a whole post type, and only the plugins that are active are read, so a value left behind by a removed plugin is ignored. Untick **Leave out pages set to noindex** under AgentWelcome > Settings > Content > Exclusions to include them again. The editor box and Verify & Preview say when this is the reason a page is not served.

@@ -157,7 +157,7 @@ final class Plugin {
 			$changes,
 			new Capabilities(),
 			new OutputCache(),
-			new Router( $urls, $eligibility, $pages, $environment, $llms, $llms_full, $llms_options, new MarkdownResponse() ),
+			new Router( $urls, $eligibility, $pages, $environment, $llms, $llms_full, $llms_options, new MarkdownResponse(), $options ),
 			new DiscoveryTags( $eligibility, $urls, $environment ),
 			new CronAuth( $options ),
 			new PagesController( $store, $pages, $status, $eligibility, $environment ),
