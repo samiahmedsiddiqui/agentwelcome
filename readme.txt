@@ -193,6 +193,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 
 = 1.1.0 =
 * Change: the title in the Markdown, llms.txt and llms-full.txt is now the page's own title without the site name. A setting switches back to the WordPress post title.
+* New: an optional setting returns the Markdown from the normal page address when a client sends `Accept: text/markdown`.
 * New: the actions `agentwelcome_markdown_updated` and `agentwelcome_cache_cleared`, so a host or CDN cache can be purged when the Markdown changes.
 * New: Verify & Preview warns when robots.txt blocks AI crawlers such as GPTBot or ClaudeBot from llms.txt and the Markdown pages.
 * New: more answers in the FAQ.

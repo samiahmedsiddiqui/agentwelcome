@@ -26,7 +26,7 @@ final class MarkdownResponse {
 	 * @param string                $content_type Content type header.
 	 * @param string                $canonical    Address of the HTML page, sent as a canonical link header.
 	 * @param int                   $modified     Unix time the content last changed, or 0 when unknown.
-	 * @param array<string, string> $extra        Additional headers.
+	 * @param array<string, string> $extra        Additional headers, which replace the ones above of the same name.
 	 * @return void
 	 */
 	public function send( string $body, string $content_type, string $canonical = '', int $modified = 0, array $extra = array() ): void {
@@ -37,7 +37,8 @@ final class MarkdownResponse {
 			'X-Robots-Tag'           => 'noindex',
 			'Cache-Control'          => 'public, max-age=300',
 			'ETag'                   => $etag,
-		) + $extra;
+		);
+		$headers = array_merge( $headers, $extra );
 
 		if ( '' !== $canonical ) {
 			$headers['Link'] = '<' . esc_url_raw( $canonical ) . '>; rel="canonical"';

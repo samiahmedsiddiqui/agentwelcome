@@ -41,6 +41,7 @@ final class Options {
 			'http_auth_user'       => '',
 			'http_auth_password'   => '',
 			'home_markdown_url'    => 'index.md',
+			'markdown_by_accept'   => false,
 			'allowed_environments' => array(),
 			'allowed_urls'         => '',
 			'delete_data'          => false,
