@@ -152,6 +152,8 @@ AgentWelcome > Verify & Preview has two tabs.
 
 You can also try a different content selector or extra exclusions without saving them; the comparison then shows what would change if you saved them. The edit screen's AgentWelcome box has a **Check against the page** link for administrators.
 
+**Blocked AI crawlers.** When the site's `robots.txt` (a real file or the one WordPress generates) disallows a known AI crawler from `/llms.txt`, the homepage `.md` address or a sample page's `.md` address, both tabs show a warning that names them: they cannot read those files. Nothing shows when none is blocked. It is informational only and the plugin never changes `robots.txt`. The result is kept for five minutes, and the list of crawlers can be changed with `agentwelcome_ai_crawlers`.
+
 Pages with content that changes on every load, such as the time, can look out of date each time. Use the `agentwelcome_compare_ignore` filter, which returns regular expressions for text to leave out of the comparison.
 
 **All pages.** Start a scan and AgentWelcome checks every stored page in the background, a few at a time, and reports how many are in sync and which differ, with a Compare link for each. The scan changes nothing. On a site that disables WP-Cron, the open All pages tab runs the scan itself, a few pages at a time, and it pauses when you close the tab. **Update outdated** then queues a refresh for the pages that differ, and **Generate missing** builds the pages that have no stored copy yet.

@@ -30,6 +30,7 @@ Filters and examples for changing what the plugin does from code.
 | `agentwelcome_content_type` | Content type of the Markdown response. |
 | `agentwelcome_answer_unserved_md` | Return `false` to stop the plugin from answering a `.md` address that is not served with its own 404, and leave it to WordPress. Receives the route and the requested path. |
 | `agentwelcome_response_headers` | Response headers. |
+| `agentwelcome_ai_crawlers` | User agents of the AI crawlers that Verify & Preview checks against robots.txt (GPTBot, ClaudeBot, PerplexityBot and others by default). |
 | `agentwelcome_woocommerce_excluded_pages` | WooCommerce pages that are left out: `cart`, `checkout`, `myaccount` and `terms` by default. Return a shorter list to include one. |
 
 ### Excluding from code
