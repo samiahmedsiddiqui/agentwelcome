@@ -4,7 +4,7 @@ The AgentWelcome admin pages: Settings, llms.txt, who can manage the llms.txt fi
 
 ## Settings
 
-The **AgentWelcome** menu has three pages. **Settings** has three tabs. **Content**: exclusions (post types, pages by ID or URL pattern, taxonomy terms), the homepage Markdown URL and the editor box. **Rendering**: the content selector, extra elements to exclude (CSS selectors, added to the built-in list) and HTTP Basic authentication. **Environment**: where the plugin runs, and whether uninstalling removes your settings. The Status column shows system info and how many pages are stored. **llms.txt** and **Verify & Preview** are described below.
+The **AgentWelcome** menu has three pages. **Settings** has three tabs. **Content**: exclusions (post types, pages by ID or URL pattern, taxonomy terms), the homepage Markdown URL and the editor box (its description field overrides the page's meta description and excerpt). **Rendering**: the content selector, extra elements to exclude (CSS selectors, added to the built-in list) and HTTP Basic authentication. **Environment**: where the plugin runs, and whether uninstalling removes your settings. The Status column shows system info and how many pages are stored. **llms.txt** and **Verify & Preview** are described below.
 
 When HTTP Basic credentials are saved, AgentWelcome also sends them with WordPress's own background request to `wp-cron.php` (and only to this site), so scheduled refreshes keep running on a protected site. Without credentials, WP-Cron cannot reach a site that asks for them, and background work waits until something else calls `wp-cron.php`.
 

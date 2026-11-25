@@ -39,6 +39,17 @@ if ( is_readable( $kit_file ) ) {
 			eval( 'namespace RankMath; class Helper { public static function replace_vars( $text, $post ) { return str_replace( "%sitename%", "Kit Site", $text ); } }' );
 		}
 	}
+	if ( ! empty( $kit['meta_desc'] ) ) {
+		add_action(
+			'wp_head',
+			static function () {
+				$text = is_singular() ? get_post_meta( get_queried_object_id(), 'kit_meta_desc', true ) : '';
+				if ( '' !== $text ) {
+					echo '<meta name="description" content="' . esc_attr( $text ) . '">';
+				}
+			}
+		);
+	}
 	if ( ! empty( $kit['volatile'] ) ) {
 		add_filter( 'the_content', static fn( $content ) => $content . '<p>Rendered at ' . gmdate( 'H:i:s' ) . ' UTC.</p>' );
 	}

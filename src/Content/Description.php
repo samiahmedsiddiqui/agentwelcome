@@ -1,6 +1,6 @@
 <?php
 /**
- * One-line page description for llms.txt: editor override, then SEO meta description, then the excerpt. Never the page content.
+ * One-line page description for llms.txt: editor override, then the meta description of the rendered page, then the excerpt. Never the page content.
  *
  * @package AgentWelcome
  */
@@ -19,8 +19,17 @@ final class Description {
 	/** An SEO plugin template tag such as %%sitename%% or #post_title. */
 	private const TEMPLATE_TAG = '/%{1,2}[a-z_]+(?:\([^)]*\))?%{1,2}|#[a-z]+_[a-z_]+/i';
 
-	/** Meta keys where SEO plugins keep the description of a page. */
+	/** Meta keys where SEO plugins keep the description of a page. They only tell AgentWelcome when to refresh the page. */
 	public const SEO_META_KEYS = array( '_yoast_wpseo_metadesc', 'rank_math_description', '_aioseo_description', '_seopress_titles_desc', '_genesis_description' );
+
+	/** The description was typed in the editor box. */
+	public const EDITOR = 'editor';
+	/** The description is the meta description of the rendered page. */
+	public const META = 'meta';
+	/** The description is the excerpt. */
+	public const EXCERPT = 'excerpt';
+	/** The page has no description. */
+	public const NONE = 'none';
 
 	/**
 	 * Whether the text still holds template tags such as %%sitename%%, %title% or #site_title.
@@ -33,99 +42,49 @@ final class Description {
 	}
 
 	/**
-	 * Finds the description of a page: the one set in the editor box, then the SEO plugin description, then the excerpt.
+	 * Finds the description of a page: the one set in the editor box, then the meta description of the rendered page, then the excerpt.
 	 *
-	 * @param WP_Post $post The page.
+	 * @param WP_Post     $post The page.
+	 * @param string|null $meta Meta description read from the page just rendered, or null to use the one stored when the page was last generated.
 	 * @return string The description, or an empty string when there is none.
 	 */
-	public function get( WP_Post $post ): string {
-		$override = trim( (string) get_post_meta( $post->ID, PostMeta::DESCRIPTION, true ) );
-
-		if ( '' !== $override ) {
-			return $override;
-		}
-
-		$text = $this->seo( $post );
-		$text = '' !== $text ? $text : $this->clean( $post->post_excerpt );
-
-		return (string) apply_filters( 'agentwelcome_description', $text, $post );
+	public function get( WP_Post $post, ?string $meta = null ): string {
+		return $this->find( $post, $meta )['text'];
 	}
 
 	/**
-	 * Reads the description saved by an SEO plugin. A text whose tags cannot be resolved is skipped.
+	 * Finds the description of a page and where it came from.
 	 *
-	 * @param WP_Post $post The page.
-	 * @return string The description, or an empty string.
+	 * @param WP_Post     $post The page.
+	 * @param string|null $meta Meta description read from the page just rendered, or null to use the stored one.
+	 * @return array{text: string, source: string} The description and one of the source constants.
 	 */
-	private function seo( WP_Post $post ): string {
-		$keys = (array) apply_filters( 'agentwelcome_meta_description_keys', self::SEO_META_KEYS, $post );
+	public function find( WP_Post $post, ?string $meta = null ): array {
+		$source = self::EDITOR;
+		$text   = trim( (string) get_post_meta( $post->ID, PostMeta::DESCRIPTION, true ) );
 
-		foreach ( $keys as $key ) {
-			$raw = trim( (string) get_post_meta( $post->ID, (string) $key, true ) );
-
-			if ( '' === $raw ) {
-				continue;
-			}
-
-			$text = $this->resolve( $raw, $post, (string) $key );
-
-			// A description that still has tags would print them, or leave gaps, so the next source is used.
-			if ( self::has_unresolved_tags( $text ) ) {
-				continue;
-			}
-
-			$text = $this->clean( $text );
-
-			if ( '' !== $text ) {
-				return $text;
-			}
+		if ( '' === $text ) {
+			$source = self::META;
+			$text   = $this->clean( $meta ?? (string) get_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION, true ) );
 		}
 
-		return '';
+		if ( '' === $text ) {
+			$source = self::EXCERPT;
+			$text   = $this->clean( $post->post_excerpt );
+		}
+
+		$text = (string) apply_filters( 'agentwelcome_description', $text, $post );
+
+		return array(
+			'text'   => $text,
+			'source' => '' === $text ? self::NONE : $source,
+		);
 	}
 
 	/**
-	 * Lets the SEO plugin that wrote the text fill in its own template tags.
+	 * Turns an excerpt or meta description into plain text of at most 30 words.
 	 *
-	 * @param string  $text Description text.
-	 * @param WP_Post $post The page.
-	 * @param string  $key  Meta key the text came from.
-	 * @return string Text with the tags filled in.
-	 */
-	private function resolve( string $text, WP_Post $post, string $key ): string {
-		if ( ! self::has_unresolved_tags( $text ) ) {
-			return $text;
-		}
-
-		try {
-			switch ( $key ) {
-				case '_yoast_wpseo_metadesc':
-					return function_exists( 'wpseo_replace_vars' ) ? (string) wpseo_replace_vars( $text, $post ) : $text;
-
-				case '_aioseo_description':
-					$api = function_exists( 'aioseo' ) ? aioseo() : null;
-
-					return is_object( $api ) && isset( $api->tags ) && is_callable( array( $api->tags, 'replaceTags' ) ) ? (string) call_user_func( array( $api->tags, 'replaceTags' ), $text, $post->ID ) : $text;
-
-				case 'rank_math_description':
-					return is_callable( array( '\RankMath\Helper', 'replace_vars' ) ) ? (string) call_user_func( array( '\RankMath\Helper', 'replace_vars' ), $text, $post ) : $text;
-
-				case '_seopress_titles_desc':
-					$service = function_exists( 'seopress_get_service' ) ? seopress_get_service( 'TagsToString' ) : null;
-
-					return is_object( $service ) && is_callable( array( $service, 'replace' ) ) ? (string) call_user_func( array( $service, 'replace' ), $text, array( 'post' => $post ) ) : $text;
-			}
-		} catch ( \Throwable $error ) {
-			return $text;
-		}
-
-		return $text;
-	}
-
-	/**
-	 * Turns an excerpt into plain text of at most 30 words.
-	 *
-	 * @param string $text Excerpt.
+	 * @param string $text Excerpt or meta description.
 	 * @return string Plain text.
 	 */
 	private function clean( string $text ): string {

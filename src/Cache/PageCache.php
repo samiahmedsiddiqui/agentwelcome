@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace AgentWelcome\Cache;
 
 use AgentWelcome\Content\Eligibility;
+use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Contracts\Hookable;
 use AgentWelcome\Environment\Environment;
 use AgentWelcome\Rendering\Generator;
@@ -233,6 +234,10 @@ final class PageCache implements Hookable {
 	private function build( WP_Post $post ): Entry {
 		$page     = $this->generator->generate( $post );
 		$fallback = RenderResult::FALLBACK === $page->source;
+
+		if ( null !== $page->meta ) {
+			'' === $page->meta ? delete_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION ) : update_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION, $page->meta );
+		}
 
 		return new Entry(
 			$post->ID,
