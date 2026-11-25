@@ -4,7 +4,7 @@ The AgentWelcome admin pages: Settings, llms.txt, who can manage the llms.txt fi
 
 ## Settings
 
-The **AgentWelcome** menu has three pages. **Settings** has three tabs. **Content**: exclusions (post types, pages by ID or URL pattern, taxonomy terms), the homepage Markdown URL and the editor box. **Rendering**: the content selector, extra elements to exclude (CSS selectors, added to the built-in list) and HTTP Basic authentication. **Environment**: where the plugin runs, and whether uninstalling removes your settings. The Status column shows system info and how many pages are stored. **llms.txt** and **Verify & Preview** are described below.
+The **AgentWelcome** menu has three pages. **Settings** has three tabs. **Content**: exclusions (post types, pages by ID or URL pattern, taxonomy terms), the homepage Markdown URL, returning Markdown to clients that send `Accept: text/markdown` (off by default, see [How it works](how-it-works.md)) and the editor box. **Rendering**: the content selector, extra elements to exclude (CSS selectors, added to the built-in list) and HTTP Basic authentication. **Environment**: where the plugin runs, and whether uninstalling removes your settings. The Status column shows system info and how many pages are stored. **llms.txt** and **Verify & Preview** are described below.
 
 When HTTP Basic credentials are saved, AgentWelcome also sends them with WordPress's own background request to `wp-cron.php` (and only to this site), so scheduled refreshes keep running on a protected site. Without credentials, WP-Cron cannot reach a site that asks for them, and background work waits until something else calls `wp-cron.php`.
 
@@ -14,6 +14,12 @@ HTTP Basic credentials are stored encrypted with a key derived from the site's a
 define( 'AGENTWELCOME_HTTP_AUTH_USER', 'user' );
 define( 'AGENTWELCOME_HTTP_AUTH_PASSWORD', 'password' );
 ```
+
+### Page title
+
+By default the title in the Markdown, `llms.txt` and `llms-full.txt` is the title tag of the rendered page, so it matches what visitors and search engines see. The WordPress post title is used when the page has no title tag, when the page could not be rendered, or when you choose **Use the WordPress post title**.
+
+**Remove the site name from page titles** (on by default) removes a separator (`|`, `-`, `–`, `—`, `·`, `:`, `»`, `•`) followed by exactly your Site Title or the page's `og:site_name`, from the start or end of the title only. "Pricing | Plans | Site Name" becomes "Pricing | Plans". Nothing is removed when the title would be left empty, and the homepage keeps its full title. Use the `agentwelcome_title_site_names` filter to list other names. Verify & Preview shows the title used and the title tag it came from.
 
 ## llms.txt
 
@@ -145,6 +151,8 @@ AgentWelcome > Verify & Preview has two tabs.
 - an **Update stored copy** (or **Create stored copy**) button when the copy is out of date or missing.
 
 You can also try a different content selector or extra exclusions without saving them; the comparison then shows what would change if you saved them. The edit screen's AgentWelcome box has a **Check against the page** link for administrators.
+
+**Blocked AI crawlers.** When the site's `robots.txt` (a real file or the one WordPress generates) disallows a known AI crawler from `/llms.txt`, the homepage `.md` address or a sample page's `.md` address, both tabs show a warning that names them: they cannot read those files. Nothing shows when none is blocked. It is informational only and the plugin never changes `robots.txt`. The result is kept for five minutes, and the list of crawlers can be changed with `agentwelcome_ai_crawlers`.
 
 Pages with content that changes on every load, such as the time, can look out of date each time. Use the `agentwelcome_compare_ignore` filter, which returns regular expressions for text to leave out of the comparison.
 

@@ -61,6 +61,7 @@ use AgentWelcome\Rendering\Selector;
 use AgentWelcome\Rest\LlmsController;
 use AgentWelcome\Rest\PagesController;
 use AgentWelcome\Rest\ScanController;
+use AgentWelcome\Robots\CrawlerCheck;
 use AgentWelcome\Robots\RobotsTxt;
 use AgentWelcome\Settings\LlmsOptions;
 use AgentWelcome\Settings\Options;
@@ -158,7 +159,7 @@ final class Plugin {
 			$changes,
 			new Capabilities(),
 			new OutputCache(),
-			new Router( $urls, $eligibility, $pages, $environment, $llms, $llms_full, $llms_options, new MarkdownResponse() ),
+			new Router( $urls, $eligibility, $pages, $environment, $llms, $llms_full, $llms_options, new MarkdownResponse(), $options ),
 			new DiscoveryTags( $eligibility, $urls, $environment ),
 			new CronAuth( $options ),
 			new PagesController( $store, $pages, $status, $eligibility, $environment ),
@@ -187,7 +188,7 @@ final class Plugin {
 				$urls,
 				$notices
 			);
-			$verify   = new VerifyPage( $urls, $verifier, $notices, $scan, $batch, $pages, $environment );
+			$verify   = new VerifyPage( $urls, $verifier, $notices, $scan, $batch, $pages, $environment, new CrawlerCheck( $options, $urls ) );
 
 			$llms_page = new LlmsPage( $llms_options, $llms, $coverage, $environment, $notices );
 

@@ -39,6 +39,8 @@ ids.append(mk("Desc Only Tokens", excerpt="Token fallback.", _yoast_wpseo_metade
 ids.append(mk("Desc Raw Aioseo", excerpt="Raw tag fallback.", _aioseo_description="Welcome to #site_title today."))
 ids.append(mk("Desc Order", rank_math_description="Rank first.", _yoast_wpseo_metadesc="Yoast first."))
 
+warm()
+
 try:
     print("--- order of sources")
     check("editor description wins", entry("Desc Override").endswith(": Editor text."), entry("Desc Override"))

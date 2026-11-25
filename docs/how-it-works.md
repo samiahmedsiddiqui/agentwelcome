@@ -25,6 +25,12 @@ Works with default WordPress permalinks and with the [Custom Permalinks](https:/
 3. The page is fetched from its own public URL as a logged-out visitor, so theme templates, ACF output and page builders are included. If that fails, the post content is used instead.
 4. The main content is selected (`main`, `[role="main"]`, `#content`, `#main`, `.site-content`, `article`, then `body`). Navigation, sidebars, forms, scripts, hidden elements and site-level headers and footers are removed. Headers and footers inside an `article`, `main` or `section` are kept. The result is converted to Markdown with a metadata header.
 
+## Markdown by Accept header
+
+Off by default. Turn on **Return Markdown when a client asks for it** under AgentWelcome > Settings > Content > Accept header. A GET or HEAD request for a normal page address (no `.md`) whose `Accept` header ranks `text/markdown` above `text/html` then gets the same stored Markdown as the `.md` address. The `q` values are read, so `text/html, text/markdown;q=0.5`, `*/*`, `text/*` and a missing header still get the HTML page, and so does a tie.
+
+The answer sends `Vary: Accept`, `Cache-Control: private, no-store` (not the public 5 minute header of the `.md` address) and a canonical `Link` header to the HTML page, because many CDNs and page caches ignore `Vary`. It is only used for singular pages that are served as Markdown. Pages that are excluded, not served or not stored yet, and requests for the admin, REST, AJAX, feeds, previews and searches, are answered by WordPress as usual, with no 404.
+
 ## noindex pages
 
 By default, a page that says noindex is left out of `llms.txt`, `llms-full.txt` and the `.md` files (the `.md` URL then gets the 404 described below). A page says noindex when the robots meta tag in its `<head>` or its `X-Robots-Tag` header has `noindex` or `none`. The plugin reads this from the page it already fetches, so it works whatever sets it: an SEO plugin on one page or on a whole post type, the theme, or the server. Directives for one named crawler, such as `googlebot: noindex`, are ignored.

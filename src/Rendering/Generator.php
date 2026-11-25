@@ -88,7 +88,8 @@ final class Generator {
 		$extractor = ! empty( $overrides['strip'] ) || ! empty( $overrides['headings'] ) ? $this->extractor->with_extra( $overrides['strip'] ?? array(), $overrides['headings'] ?? array() ) : $this->extractor;
 		$node      = $extractor->extract( $render->html, $selector, $url );
 		$body      = null === $node ? '' : $this->converter->convert( $node );
-		$title     = trim( html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES, 'UTF-8' ) );
+		$chosen    = $this->title( $post, $render );
+		$title     = $chosen['title'];
 
 		if ( '' !== $title && ( null === $node || 0 === $node->getElementsByTagName( 'h1' )->length ) ) {
 			$body = "# {$title}\n\n" . $body;
@@ -123,6 +124,28 @@ final class Generator {
 		// A page built without its rendered HTML has no robots information, so its result is unknown.
 		$known = RenderResult::LOOPBACK === $render->source || $noindex;
 
-		return new GeneratedPage( $markdown, $render->source, $render->notice, $known ? $noindex : null, $source );
+		return new GeneratedPage( $markdown, $render->source, $render->notice, $known ? $noindex : null, $source, $title, $chosen['original'], $chosen['used'] );
+	}
+
+	/**
+	 * Chooses the title of a page: the title tag of the rendered page without the site name, or the post title.
+	 *
+	 * @param WP_Post      $post   The page.
+	 * @param RenderResult $render The rendered page.
+	 * @return array{title: string, original: string, used: string} The title, the title tag as found, and which one was used.
+	 */
+	private function title( WP_Post $post, RenderResult $render ): array {
+		$post_title = trim( html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES, 'UTF-8' ) );
+
+		if ( RenderResult::LOOPBACK !== $render->source ) {
+			return PageTitle::choose( $post_title, '', array(), false, false, false );
+		}
+
+		$read  = PageTitle::read( $render->html );
+		$names = array( trim( html_entity_decode( wp_strip_all_tags( get_bloginfo( 'name' ) ), ENT_QUOTES, 'UTF-8' ) ), $read['site_name'] );
+		$names = array_map( 'strval', (array) apply_filters( 'agentwelcome_title_site_names', $names, $post ) );
+		$home  = 'page' === get_option( 'show_on_front' ) && (int) get_option( 'page_on_front' ) === $post->ID;
+
+		return PageTitle::choose( $post_title, $read['title'], $names, (bool) $this->options->get( 'title_strip_site', true ), 'post' !== $this->options->get( 'title_source', 'page' ), $home );
 	}
 }

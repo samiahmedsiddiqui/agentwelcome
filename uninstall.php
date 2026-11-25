@@ -48,6 +48,7 @@ function agentwelcome_uninstall_site(): void {
 	delete_option( 'agentwelcome_batch' );
 	delete_option( 'agentwelcome_scan' );
 	delete_option( 'agentwelcome_changes' );
+	delete_post_meta_by_key( '_agentwelcome_page_title' );
 	wp_unschedule_hook( 'agentwelcome_generate_post' );
 	wp_unschedule_hook( 'agentwelcome_regenerate_batch' );
 	wp_unschedule_hook( 'agentwelcome_prune' );

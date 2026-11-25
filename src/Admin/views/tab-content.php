@@ -65,6 +65,18 @@ $options = $vars['options'];
 </section>
 
 <section class="agentwelcome-card">
+	<h2><?php esc_html_e( 'Accept header', 'agentwelcome' ); ?></h2>
+	<p class="agentwelcome-intro"><?php esc_html_e( 'Let a client get the Markdown from the normal page address.', 'agentwelcome' ); ?></p>
+	<div class="agentwelcome-field">
+		<label>
+			<input type="checkbox" name="<?php echo esc_attr( $name ); ?>[markdown_by_accept]" value="1" <?php checked( (bool) $options->get( 'markdown_by_accept', false ) ); ?> />
+			<?php esc_html_e( 'Return Markdown when a client asks for it', 'agentwelcome' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'A request for a page with an Accept header that prefers text/markdown over text/html gets the same Markdown as the .md address. Browsers are not affected. The answer is marked as not cacheable and sends Vary: Accept.', 'agentwelcome' ); ?></p>
+	</div>
+</section>
+
+<section class="agentwelcome-card">
 	<h2><?php esc_html_e( 'Editor', 'agentwelcome' ); ?></h2>
 	<p class="agentwelcome-intro"><?php esc_html_e( 'Choose whether editors see AgentWelcome on the edit screen.', 'agentwelcome' ); ?></p>
 	<div class="agentwelcome-field">

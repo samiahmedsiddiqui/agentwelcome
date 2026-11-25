@@ -98,13 +98,44 @@ final class Converter {
 	 * @return string Markdown of the children.
 	 */
 	private function children( DOMNode $node, int $depth, bool $pre ): string {
-		$output = '';
+		$output   = '';
+		$previous = null;
 
 		foreach ( $node->childNodes as $child ) {
-			$output .= $this->node( $child, $depth + 1, $pre );
+			$piece = $this->node( $child, $depth + 1, $pre );
+
+			if ( ! $pre && $this->touching( $previous, $child, $output, $piece ) ) {
+				$output .= ' ';
+			}
+
+			$output  .= $piece;
+			$previous = $child;
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Tells whether two touching links, or a link and a span, need a space between them.
+	 *
+	 * @param ?DOMNode $previous Node before it.
+	 * @param DOMNode  $node     Node about to be added.
+	 * @param string   $before Markdown written so far.
+	 * @param string   $piece  Markdown of the node.
+	 * @return bool True when a space belongs between them.
+	 */
+	private function touching( ?DOMNode $previous, DOMNode $node, string $before, string $piece ): bool {
+		if ( ! $node instanceof DOMElement || ! $previous instanceof DOMElement || '' === $before || '' === $piece ) {
+			return false;
+		}
+
+		$tags = array( strtolower( $previous->nodeName ), strtolower( $node->nodeName ) );
+
+		if ( ! in_array( 'a', $tags, true ) || array() !== array_diff( $tags, array( 'a', 'span' ) ) ) {
+			return false;
+		}
+
+		return 1 !== preg_match( '/\s$/', $before ) && 1 === preg_match( '/^(\[|[^\s\p{P}])/u', $piece );
 	}
 
 	/**

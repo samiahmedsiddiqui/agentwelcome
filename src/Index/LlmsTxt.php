@@ -12,6 +12,7 @@ namespace AgentWelcome\Index;
 use AgentWelcome\Cache\Store;
 use AgentWelcome\Content\Description;
 use AgentWelcome\Content\Eligibility;
+use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Content\PostTypes;
 use AgentWelcome\Http\Urls;
 use AgentWelcome\Settings\LlmsOptions;
@@ -166,6 +167,18 @@ final class LlmsTxt {
 	}
 
 	/**
+	 * Title of a page: the one stored when it was generated, or the WordPress title.
+	 *
+	 * @param WP_Post $post The page.
+	 * @return string The title.
+	 */
+	private function title( WP_Post $post ): string {
+		$stored = get_post_meta( $post->ID, PostMeta::TITLE, true );
+
+		return is_string( $stored ) && '' !== $stored ? $stored : get_the_title( $post );
+	}
+
+	/**
 	 * Line for one page: a link to the Markdown version, with its description.
 	 *
 	 * @param WP_Post $post The page.
@@ -178,7 +191,7 @@ final class LlmsTxt {
 			return null;
 		}
 
-		$title = str_replace( array( '[', ']' ), array( '\\[', '\\]' ), SingleLine::from( get_the_title( $post ) ) );
+		$title = str_replace( array( '[', ']' ), array( '\\[', '\\]' ), SingleLine::from( $this->title( $post ) ) );
 		$title = '' === $title ? $post->post_name : $title;
 		$text  = SingleLine::from( wp_trim_words( $this->description->get( $post ), 30 ) );
 

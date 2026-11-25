@@ -68,6 +68,7 @@ eq "editor checkbox 404" "$(code $B/hidden-page.md)" 404
 eq "pattern/id still 200 before" "$(code $B/checkout.md)" 200
 
 echo "--- llms.txt"
+python3 -c "from kit import *; warm()" >/dev/null 2>&1
 L=$(body $B/llms.txt)
 has "llms title" "$L" '# AgentWelcome Test'
 has "llms pages section" "$L" '## Pages'
