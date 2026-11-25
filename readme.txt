@@ -158,6 +158,8 @@ AgentWelcome falls back to the post content. That output is thinner, because fie
 
 If the page says noindex, AgentWelcome leaves it out by default. It reads the robots meta tag and the X-Robots-Tag header of the page, so a post type that your SEO plugin sets to noindex is left out too. The AgentWelcome box on the edit screen and Verify & Preview say so. To include such pages, untick "Leave out pages set to noindex" under AgentWelcome > Settings > Content > Exclusions.
 
+If visitors cannot read the page, AgentWelcome leaves it out as well. This is the case when a membership or access-control plugin answers a logged-out visitor with HTTP 401 or 403, or sends the visitor to a login page. Verify & Preview and the edit screen box give the reason. To include such pages, untick "Leave out pages that visitors cannot read" under AgentWelcome > Settings > Content > Exclusions, or return false from the `agentwelcome_is_restricted` filter for a single page.
+
 A page that has not been generated yet is not listed either. After an install or an update the plugin generates every page in the background, so the list fills in over a few minutes.
 
 = Do the stored copies update when I change my theme, ACF options or Elementor templates? =
@@ -194,6 +196,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 == Changelog ==
 
 = 1.1.0 =
+* New: pages that visitors cannot read, because a membership or access-control plugin answers with HTTP 401 or 403 or redirects to a login page, are left out of llms.txt, llms-full.txt and the Markdown pages. A setting and the `agentwelcome_is_restricted` filter include them.
 * Change: noindex is read from the page's robots meta tag and X-Robots-Tag header instead of from SEO plugin settings, so a whole post type or a theme setting is respected. llms.txt lists only pages that have been generated, and every page is generated in the background after an update.
 * Change: the title in the Markdown, llms.txt and llms-full.txt is now the page's own title without the site name. A setting switches back to the WordPress post title.
 * New: an optional setting returns the Markdown from the normal page address when a client sends `Accept: text/markdown`.

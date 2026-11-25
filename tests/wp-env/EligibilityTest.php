@@ -89,6 +89,35 @@ final class EligibilityTest extends WP_UnitTestCase {
 		$this->assertFalse( $this->eligibility->hides( $this->entry( $page->ID, true ) ) );
 	}
 
+	public function test_a_stored_restricted_result_hides_the_page(): void {
+		$page = $this->page();
+
+		$this->assertTrue( $this->eligibility->hides( $this->restricted_entry( $page->ID, 'http_403' ) ) );
+		$this->assertTrue( $this->eligibility->hides( $this->restricted_entry( $page->ID, 'redirect:/login/' ) ) );
+		$this->assertFalse( $this->eligibility->hides( $this->restricted_entry( $page->ID, '' ) ) );
+		$this->assertFalse( $this->eligibility->hides( $this->restricted_entry( $page->ID, null ) ) );
+	}
+
+	public function test_a_restricted_page_is_served_when_the_setting_is_off(): void {
+		$page = $this->page();
+		update_option( Options::KEY, array( 'exclude_restricted' => false ) );
+
+		$this->assertFalse( $this->eligibility->hides( $this->restricted_entry( $page->ID, 'http_403' ) ) );
+	}
+
+	public function test_the_reason_is_explained(): void {
+		$this->assertStringContainsString( 'HTTP 403', $this->eligibility->describe_restricted( 'http_403' ) );
+		$this->assertStringContainsString( 'redirected to /login/', $this->eligibility->describe_restricted( 'redirect:/login/' ) );
+	}
+
+	/**
+	 * @param int         $post_id    Page ID.
+	 * @param string|null $restricted Result stored with the copy.
+	 */
+	private function restricted_entry( int $post_id, ?string $restricted ): Entry {
+		return new Entry( $post_id, "# Page\n", sha1( 'page' ), 'loopback', '1.0.0', gmdate( 'Y-m-d H:i:s' ), Entry::FRESH, null, $restricted );
+	}
+
 	/**
 	 * @param int       $post_id Page ID.
 	 * @param bool|null $noindex Result stored with the copy.

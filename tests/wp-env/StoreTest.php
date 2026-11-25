@@ -54,6 +54,33 @@ final class StoreTest extends WP_UnitTestCase {
 		$this->assertSame( array(), $this->store->noindex_flags( array() ) );
 	}
 
+	/**
+	 * @param int         $post_id    Page ID.
+	 * @param string|null $restricted Result stored with the copy.
+	 */
+	private function restricted_entry( int $post_id, ?string $restricted ): Entry {
+		return new Entry( $post_id, "# Page\n", sha1( 'page' ), 'loopback', '1.0.0', gmdate( 'Y-m-d H:i:s' ), Entry::FRESH, null, $restricted );
+	}
+
+	public function test_the_restricted_result_is_read_back(): void {
+		$this->store->save( $this->restricted_entry( 131, 'http_403' ) );
+		$this->store->save( $this->restricted_entry( 132, '' ) );
+		$this->store->save( $this->restricted_entry( 133, null ) );
+
+		$this->assertSame( 'http_403', $this->store->get( 131 )->restricted );
+		$this->assertSame( '', $this->store->get( 132, false )->restricted );
+		$this->assertNull( $this->store->get( 133 )->restricted );
+		$this->assertSame(
+			array(
+				131 => 'http_403',
+				132 => '',
+				133 => null,
+			),
+			$this->store->restricted_reasons( array( 131, 132, 133, 134 ) )
+		);
+		$this->assertSame( array(), $this->store->restricted_reasons( array() ) );
+	}
+
 	public function test_a_saved_copy_is_read_back_unchanged(): void {
 		$this->store->save( $this->entry( 101, "# Hello\n\nA paragraph with a umlaut: \u{00fc}.\n" ) );
 

@@ -138,7 +138,7 @@ try:
     gen(a)
     wpcli("option", "update", "agentwelcome_db_version", "1")
     site.get("/")
-    check("the database version is updated", wpcli("option", "get", "agentwelcome_db_version").strip() == "2")
+    check("the database version is updated", wpcli("option", "get", "agentwelcome_db_version").strip() == "3")
     check("the background job was started", php("echo get_option('agentwelcome_batch') === false ? 'no' : 'yes';") == "yes")
     check("and the request for it is cleared", php("echo get_option('agentwelcome_warmup') === false ? 'gone' : 'left';") == "gone")
     check("stored copies are marked out of date", row(a)["state"] == "stale", row(a))

@@ -60,7 +60,9 @@ final class PageStatus {
 		}
 
 		if ( $this->eligibility->hides( $entry ) ) {
-			return array_merge( $base, $this->unavailable( $this->eligibility->describe( 'noindex' ) ) );
+			$label = null !== $entry && $this->eligibility->hides_restricted( $entry->restricted ) ? $this->eligibility->describe_restricted( (string) $entry->restricted ) : $this->eligibility->describe( 'noindex' );
+
+			return array_merge( $base, $this->unavailable( $label ) );
 		}
 
 		$base['can_regenerate'] = true;

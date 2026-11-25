@@ -50,7 +50,7 @@ final class Renderer {
 			return $this->fallback( $post, '' );
 		}
 
-		$result = $this->loopback( $url );
+		$result = $this->loopback( $post, $url );
 
 		return $result instanceof RenderResult ? $result : $this->fallback( $post, $result );
 	}
@@ -58,16 +58,18 @@ final class Renderer {
 	/**
 	 * Requests the page address, following redirects on the same site. Saved credentials are not sent over http when the first address was https.
 	 *
-	 * @param string $url Address of the page.
+	 * @param WP_Post $post The page.
+	 * @param string  $url  Address of the page.
 	 * @return RenderResult|string The result, or an error code.
 	 */
-	private function loopback( string $url ): RenderResult|string {
+	private function loopback( WP_Post $post, string $url ): RenderResult|string {
 		$auth   = $this->options->http_auth();
 		$secure = 'https' === wp_parse_url( $url, PHP_URL_SCHEME );
+		$page   = $url;
 
 		for ( $hop = 0; $hop <= self::MAX_REDIRECTS; $hop++ ) {
 			if ( ! $this->is_same_site( $url ) ) {
-				return 'redirect_off_site';
+				return $this->restricted( $post, Restriction::from_redirect( $page, $url ) ) ?? 'redirect_off_site';
 			}
 
 			if ( null !== $auth && $secure && 'https' !== wp_parse_url( $url, PHP_URL_SCHEME ) ) {
@@ -93,6 +95,14 @@ final class Renderer {
 				continue;
 			}
 
+			// A 401 that asks for HTTP Basic credentials is a protected site, not a restricted page.
+			$basic      = null !== $auth || 0 === stripos( (string) wp_remote_retrieve_header( $response, 'www-authenticate' ), 'basic' );
+			$restricted = $this->restricted( $post, Restriction::from_redirect( $page, $url ) ?? Restriction::from_status( $code, $basic ) );
+
+			if ( null !== $restricted ) {
+				return $restricted;
+			}
+
 			if ( 401 === $code ) {
 				return null === $auth ? 'http_auth_required' : 'http_auth_failed';
 			}
@@ -109,6 +119,32 @@ final class Renderer {
 		}
 
 		return 'too_many_redirects';
+	}
+
+	/**
+	 * Builds the result of a page that visitors cannot read, unless the setting is off or a filter includes the page.
+	 *
+	 * @param WP_Post     $post   The page.
+	 * @param string|null $reason Why visitors cannot read it, or null when they can.
+	 * @return RenderResult|null The result, or null when the page is treated as readable.
+	 */
+	private function restricted( WP_Post $post, ?string $reason ): ?RenderResult {
+		if ( null === $reason || ! $this->options->get( 'exclude_restricted', true ) ) {
+			return null;
+		}
+
+		/**
+		 * Filters whether a page that visitors cannot read is left out. Return false to include the page.
+		 *
+		 * @param bool    $restricted Whether the page is left out.
+		 * @param WP_Post $post       The page.
+		 * @param string  $reason     Short code: http_401, http_403 or redirect.
+		 */
+		if ( ! apply_filters( 'agentwelcome_is_restricted', true, $post, Restriction::code( $reason ) ) ) {
+			return null;
+		}
+
+		return new RenderResult( '', RenderResult::RESTRICTED, '', '', $reason );
 	}
 
 	/**

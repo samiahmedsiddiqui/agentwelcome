@@ -83,6 +83,10 @@ final class Generator {
 	 * @return GeneratedPage The Markdown and where it came from.
 	 */
 	public function build( WP_Post $post, RenderResult $render, array $overrides = array() ): GeneratedPage {
+		if ( RenderResult::RESTRICTED === $render->source ) {
+			return new GeneratedPage( '', $render->source, '', null, '', null, '', '', '', PageTitle::POST, $render->restricted );
+		}
+
 		$url       = (string) $this->urls->permalink( $post );
 		$selector  = $this->content_selector( $overrides );
 		$extractor = ! empty( $overrides['strip'] ) || ! empty( $overrides['headings'] ) ? $this->extractor->with_extra( $overrides['strip'] ?? array(), $overrides['headings'] ?? array() ) : $this->extractor;
@@ -126,7 +130,7 @@ final class Generator {
 		// A page built without its rendered HTML has no robots information, so its result is unknown.
 		$known = RenderResult::LOOPBACK === $render->source || $noindex;
 
-		return new GeneratedPage( $markdown, $render->source, $render->notice, $meta, $found['source'], $known ? $noindex : null, $source, $title, $chosen['original'], $chosen['used'] );
+		return new GeneratedPage( $markdown, $render->source, $render->notice, $meta, $found['source'], $known ? $noindex : null, $source, $title, $chosen['original'], $chosen['used'], RenderResult::LOOPBACK === $render->source ? '' : null );
 	}
 
 	/**

@@ -7,6 +7,7 @@ Filters and examples for changing what the plugin does from code.
 | Filter | Purpose |
 | --- | --- |
 | `agentwelcome_is_eligible` | Exclude a post programmatically. Receives `$eligible` and the `WP_Post`. |
+| `agentwelcome_is_restricted` | Whether a page that visitors cannot read is left out. Starts as `true`. Receives the result, the `WP_Post` and a reason code: `http_401`, `http_403` or `redirect`. Return `false` to include the page on purpose. |
 | `agentwelcome_is_noindex` | Whether a page counts as noindex. Starts as what its robots meta tag and `X-Robots-Tag` header say. Receives the result and the `WP_Post`. |
 | `agentwelcome_excluded_post_types` | Add or remove excluded post types in code. |
 | `agentwelcome_show_meta_box` | Show or hide the editor box. Receives the setting and the post type. |

@@ -43,6 +43,13 @@ $options = $vars['options'];
 		</label>
 		<p class="description"><?php esc_html_e( 'Skips pages whose source says noindex, in llms.txt, llms-full.txt and as Markdown. It reads the robots meta tag and the X-Robots-Tag header of the page, so a whole post type that your SEO plugin sets to noindex is left out too.', 'agentwelcome' ); ?></p>
 	</div>
+	<div class="agentwelcome-field">
+		<label>
+			<input type="checkbox" name="<?php echo esc_attr( $name ); ?>[exclude_restricted]" value="1" <?php checked( (bool) $options->get( 'exclude_restricted', true ) ); ?> />
+			<?php esc_html_e( 'Leave out pages that visitors cannot read', 'agentwelcome' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'Skips pages that answer a logged-out visitor with HTTP 401 or 403, or send the visitor to another page such as a login page, in llms.txt, llms-full.txt and as Markdown. Membership and access-control plugins do this.', 'agentwelcome' ); ?></p>
+	</div>
 </section>
 
 <section class="agentwelcome-card">

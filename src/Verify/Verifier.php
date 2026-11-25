@@ -52,6 +52,10 @@ final class Verifier {
 		$render = $this->renderer->render( $post );
 		$page   = $this->generator->build( $post, $render, $overrides );
 
+		if ( $this->eligibility->hides_restricted( $page->restricted ) ) {
+			return new VerifyResult( VerifyResult::NOT_SERVED, $this->eligibility->describe_restricted( (string) $page->restricted ) );
+		}
+
 		if ( $this->eligibility->hides_result( $page->noindex ) ) {
 			$sources = array(
 				Robots::META   => __( 'the robots meta tag', 'agentwelcome' ),

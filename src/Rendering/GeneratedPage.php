@@ -25,6 +25,7 @@ final class GeneratedPage {
 	 * @param string      $title    Title used in the Markdown.
 	 * @param string      $original Title tag of the rendered page, before the site name was removed.
 	 * @param string      $used     Which title was used: a PageTitle constant.
+	 * @param string|null $restricted Why visitors cannot read the page, an empty string when they can, or null when unknown.
 	 */
 	public function __construct(
 		public string $markdown,
@@ -36,6 +37,7 @@ final class GeneratedPage {
 		public string $noindex_source = '',
 		public string $title = '',
 		public string $original = '',
-		public string $used = PageTitle::POST
+		public string $used = PageTitle::POST,
+		public ?string $restricted = null
 	) {}
 }
