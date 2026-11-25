@@ -50,17 +50,37 @@ The source code, the tests and the issue tracker are on GitHub: https://github.c
 
 == Frequently Asked Questions ==
 
+= What is llms.txt? =
+
+A plain text file at `/llms.txt` that lists the pages of your site with a short description, written in Markdown for AI tools to read. AgentWelcome builds it for you and also serves a Markdown version of each page at its address plus `.md`.
+
+= Does it make my site show up in ChatGPT, Claude or Perplexity? =
+
+No. Nothing guarantees that. These tools decide for themselves whether to read llms.txt, and AgentWelcome cannot make them. It only makes your content easy to read for the ones that do.
+
 = What are the Markdown URLs? =
 
 Add `.md` to the page URL without the trailing slash: `/about/` becomes `/about.md` and `/services/web/` becomes `/services/web.md`. The homepage is `/index.md`. `/about/index.html.md`, `/about/index.md` and `/index.html.md` also work. You can choose `/index.html.md` as the homepage URL under AgentWelcome > Settings > Content > Homepage; the chosen one is listed in llms.txt.
 
 = Why do I get a 404 for a page? =
 
-The page is not published, is password protected, belongs to an excluded post type, is hidden in the editor, matches an exclusion rule, or has no pretty permalink. Verify & Preview tells you which.
+The page is not published, is password protected, belongs to an excluded post type, is hidden in the editor, matches an exclusion rule, is set to noindex by an SEO plugin, or has no pretty permalink. Verify & Preview tells you which.
 
 = Does it work with Custom Permalinks? =
 
 Yes. Pages, posts and custom post types that have a custom URL set by the Custom Permalinks plugin get their `.md` version at that URL plus `.md`, for example `/company/about-us.md`. A request for the original WordPress URL plus `.md`, for example `/about.md`, is redirected to it. Pages with default WordPress permalinks work as usual.
+
+= Why does /llms.txt show a different file than I expected? =
+
+A real llms.txt file in the site root, for example one written by Yoast SEO, is served by the web server before WordPress runs. See "I already have an llms.txt file on my server" below.
+
+= Is content added by JavaScript or AJAX included? =
+
+No. AgentWelcome reads the page as the server sends it, so text, products or lists that a script adds after the page loads are not in the Markdown.
+
+= Does it work with multilingual sites such as WPML or Polylang? =
+
+Not yet. Multilingual sites are not supported, so do not rely on it to list or serve each language.
 
 = Does it work with plain permalinks? =
 
@@ -69,6 +89,14 @@ No. Pages that use `?p=123` style URLs are never converted. Choose another struc
 = Why does AgentWelcome do nothing on my staging site? =
 
 It only runs on production by default. Open AgentWelcome > Settings > Environment and tick your environment, or define `WP_ENVIRONMENT_TYPE` as `production`. To limit it to certain domains, set "Allowed URLs", or define `AGENTWELCOME_ALLOWED_URLS` in `wp-config.php`. `define( 'AGENTWELCOME_ENABLED', false );` switches it off completely.
+
+= How do I purge my host or CDN cache when the Markdown changes? =
+
+Hook into the `agentwelcome_markdown_updated` action, which runs with the post ID and the Markdown address when a page's stored Markdown changes or is removed, and `agentwelcome_cache_cleared`, which runs once when every stored copy is cleared. Call your host's or CDN's purge from them. An example is in `docs/hooks.md` in the GitHub repository.
+
+= Are WooCommerce pages included? =
+
+The cart, checkout, My account and terms pages are left out, because they are different for each visitor. The shop page and products are included. The `agentwelcome_woocommerce_excluded_pages` filter changes the list.
 
 = How do I know the stored Markdown matches my page? =
 
@@ -165,6 +193,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 
 = 1.1.0 =
 * New: the actions `agentwelcome_markdown_updated` and `agentwelcome_cache_cleared`, so a host or CDN cache can be purged when the Markdown changes.
+* New: more answers in the FAQ.
 * New: WooCommerce cart, checkout, My account and terms pages are left out of llms.txt and the Markdown pages.
 * Fix: a `.md` address that is not served now gets a plain text 404 from the plugin, so another plugin or a host rule can no longer redirect it to the homepage.
 
