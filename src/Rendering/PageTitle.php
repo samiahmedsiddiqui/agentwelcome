@@ -89,6 +89,8 @@ final class PageTitle {
 			static fn( string $a, string $b ): int => mb_strlen( $b ) - mb_strlen( $a )
 		);
 
+		$title = self::trim_separators( $title );
+
 		foreach ( $names as $name ) {
 			$quoted = preg_quote( $name, '/' );
 
@@ -102,6 +104,18 @@ final class PageTitle {
 		}
 
 		return $title;
+	}
+
+	/**
+	 * Removes a separator left at either end of a title.
+	 *
+	 * @param string $title Title on one line.
+	 * @return string The title, or the original when nothing would be left.
+	 */
+	private static function trim_separators( string $title ): string {
+		$trimmed = trim( (string) preg_replace( '/\A(?:\s|' . self::SEPARATORS . ')+|(?:\s|' . self::SEPARATORS . ')+\z/u', '', $title ) );
+
+		return '' === $trimmed ? $title : $trimmed;
 	}
 
 	/**

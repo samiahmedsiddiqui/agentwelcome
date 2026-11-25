@@ -23,13 +23,13 @@ $has_pass = '' !== (string) $options->get( 'http_auth_password', '' );
 	<div class="agentwelcome-field">
 		<label>
 			<input type="radio" name="<?php echo esc_attr( $name ); ?>[title_source]" value="page" <?php checked( 'post' !== (string) $options->get( 'title_source', 'page' ) ); ?> />
-			<?php esc_html_e( "Use the page's own title (default)", 'agentwelcome' ); ?>
+			<?php esc_html_e( "Use the page's own title", 'agentwelcome' ); ?>
 		</label><br />
 		<label>
 			<input type="radio" name="<?php echo esc_attr( $name ); ?>[title_source]" value="post" <?php checked( 'post', (string) $options->get( 'title_source', 'page' ) ); ?> />
 			<?php esc_html_e( 'Use the WordPress post title', 'agentwelcome' ); ?>
 		</label>
-		<p class="description"><?php esc_html_e( 'The page title is the title tag visitors and search engines see. The post title is used when a page has none.', 'agentwelcome' ); ?></p>
+		<p class="description"><?php esc_html_e( 'The page title, which is the default, is the title tag visitors and search engines see. The post title is used when a page has none.', 'agentwelcome' ); ?></p>
 	</div>
 	<div class="agentwelcome-field">
 		<label>

@@ -72,6 +72,10 @@ final class Invalidator implements Hookable {
 	 * @return void
 	 */
 	public function on_save( int $post_id, WP_Post $post ): void {
+		if ( ! wp_is_post_revision( $post ) ) {
+			delete_post_meta( $post_id, PostMeta::TITLE );
+		}
+
 		$this->touch( $post );
 	}
 
