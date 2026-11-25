@@ -187,10 +187,14 @@ final class Router implements Hookable {
 			$view = Urls::split_view( $route['path'] );
 			$post = null === $view ? null : $this->urls->resolve( $view['path'] );
 
-			if ( null !== $view && null !== $post && $view['paged'] <= $this->urls->view_count( $post ) ) {
+			// A view that does not exist is not redirected to the page.
+			if ( null !== $view && null !== $post ) {
+				if ( $view['paged'] > $this->urls->view_count( $post ) || ! $this->eligibility->is_eligible( $post ) ) {
+					$this->not_found( $route, $request );
+					return;
+				}
+
 				$paged = $view['paged'];
-			} else {
-				$post = null;
 			}
 		}
 
