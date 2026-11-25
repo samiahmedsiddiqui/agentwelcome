@@ -9,7 +9,7 @@ Generated Markdown is stored in a `{prefix}agentwelcome_pages` table. There is n
 - An out-of-date copy is still served while a new one is built. Copies built by an older plugin version are rebuilt on the next request.
 - Changing the content selector, the excluded elements or the HTTP Basic credentials marks every copy out of date and rebuilds them in the background.
 - Saving an ACF options page marks every copy out of date and rebuilds them in the background. Saving a page in Elementor refreshes that page, and saving an Elementor saved template refreshes every page.
-- Changing the SEO meta description of a page (Yoast SEO, Rank Math, All in One SEO, SEOPress, The SEO Framework) refreshes that page, because it feeds `llms.txt` and the metadata block.
+- Changing the SEO meta description of a page (Yoast SEO, Rank Math, All in One SEO, SEOPress, The SEO Framework) refreshes that page, because the new `<meta name="description">` feeds `llms.txt` and the metadata block.
 - Switching the theme, updating the active theme or saving the Customizer marks every copy out of date and rebuilds them in the background, and a notice on the AgentWelcome pages says so. Activating, deactivating or updating other plugins only shows a notice that points to Check all pages, because plugin updates are frequent. Dismiss a notice with its link. Nothing is recorded while the plugin is inactive.
 - Responses carry `X-AgentWelcome-Cache: HIT`, `STALE` or `MISS`.
 - Hosts, CDNs and browsers can keep `.md` and `llms.txt` for a few minutes (the plugin allows 5, with `Cache-Control: max-age=300`). If a change does not show yet, add a query string such as `/about.md?t=123`. Query strings are ignored when the page is found.

@@ -94,6 +94,7 @@ final class WpdbStore implements Store {
 		global $wpdb;
 
 		$removed = $wpdb->delete( Schema::table(), array( 'post_id' => $post_id ), array( '%d' ) );
+		delete_post_meta( $post_id, PostMeta::PAGE_DESCRIPTION );
 		delete_post_meta( $post_id, PostMeta::TITLE );
 		OutputCache::purge();
 
