@@ -163,5 +163,9 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 
 == Changelog ==
 
+= 1.1.0 =
+* New: the actions `agentwelcome_markdown_updated` and `agentwelcome_cache_cleared`, so a host or CDN cache can be purged when the Markdown changes.
+* New: WooCommerce cart, checkout, My account and terms pages are left out of llms.txt and the Markdown pages.
+
 = 1.0.0 =
 * Initial release.
