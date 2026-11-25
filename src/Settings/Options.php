@@ -34,6 +34,8 @@ final class Options {
 			'content_selector'     => '',
 			'strip_selectors'      => '',
 			'heading_selectors'    => '',
+			'title_source'         => 'page',
+			'title_strip_site'     => true,
 			'show_meta_box'        => true,
 			'http_auth_enabled'    => false,
 			'http_auth_user'       => '',

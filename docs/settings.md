@@ -15,6 +15,12 @@ define( 'AGENTWELCOME_HTTP_AUTH_USER', 'user' );
 define( 'AGENTWELCOME_HTTP_AUTH_PASSWORD', 'password' );
 ```
 
+### Page title
+
+By default the title in the Markdown, `llms.txt` and `llms-full.txt` is the title tag of the rendered page, so it matches what visitors and search engines see. The WordPress post title is used when the page has no title tag, when the page could not be rendered, or when you choose **Use the WordPress post title**.
+
+**Remove the site name from page titles** (on by default) removes a separator (`|`, `-`, `–`, `—`, `·`, `:`, `»`, `•`) followed by exactly your Site Title or the page's `og:site_name`, from the start or end of the title only. "Pricing | Plans | Site Name" becomes "Pricing | Plans". Nothing is removed when the title would be left empty, and the homepage keeps its full title. Use the `agentwelcome_title_site_names` filter to list other names. Verify & Preview shows the title used and the title tag it came from.
+
 ## llms.txt
 
 AgentWelcome > llms.txt has three cards. These settings are saved apart from the main settings and are removed on uninstall when "Delete all data on uninstall" is ticked.
@@ -145,6 +151,8 @@ AgentWelcome > Verify & Preview has two tabs.
 - an **Update stored copy** (or **Create stored copy**) button when the copy is out of date or missing.
 
 You can also try a different content selector or extra exclusions without saving them; the comparison then shows what would change if you saved them. The edit screen's AgentWelcome box has a **Check against the page** link for administrators.
+
+**Blocked AI crawlers.** When the site's `robots.txt` (a real file or the one WordPress generates) disallows a known AI crawler from `/llms.txt`, the homepage `.md` address or a sample page's `.md` address, both tabs show a warning that names them: they cannot read those files. Nothing shows when none is blocked. It is informational only and the plugin never changes `robots.txt`. The result is kept for five minutes, and the list of crawlers can be changed with `agentwelcome_ai_crawlers`.
 
 Pages with content that changes on every load, such as the time, can look out of date each time. Use the `agentwelcome_compare_ignore` filter, which returns regular expressions for text to leave out of the comparison.
 
