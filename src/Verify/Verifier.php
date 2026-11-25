@@ -40,17 +40,18 @@ final class Verifier {
 	 * @param WP_Post                                                                   $post      The page.
 	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
 	 * @param bool                                                                      $coverage  Also check the page text against the Markdown.
+	 * @param int                                                                       $paged     Number of the paginated view, 1 for the page itself.
 	 * @return VerifyResult The outcome.
 	 */
-	public function verify( WP_Post $post, array $overrides = array(), bool $coverage = true ): VerifyResult {
+	public function verify( WP_Post $post, array $overrides = array(), bool $coverage = true, int $paged = 1 ): VerifyResult {
 		$reason = $this->eligibility->reason( $post );
 
 		if ( null !== $reason ) {
 			return new VerifyResult( VerifyResult::NOT_SERVED, $this->eligibility->describe( $reason ) );
 		}
 
-		$render = $this->renderer->render( $post );
-		$page   = $this->generator->build( $post, $render, $overrides );
+		$render = $this->renderer->render( $post, $paged );
+		$page   = $this->generator->build( $post, $render, $overrides, $paged );
 
 		if ( $this->eligibility->hides_restricted( $page->restricted ) ) {
 			return new VerifyResult( VerifyResult::NOT_SERVED, $this->eligibility->describe_restricted( (string) $page->restricted ) );
@@ -72,7 +73,7 @@ final class Verifier {
 				)
 			);
 		}
-		$entry  = $this->store->get( $post->ID );
+		$entry  = $this->store->get( $post->ID, true, $paged );
 		$blocks = $coverage ? $this->generator->text_blocks( $render, $overrides ) : null;
 		$result = new VerifyResult(
 			VerifyResult::NOT_STORED,

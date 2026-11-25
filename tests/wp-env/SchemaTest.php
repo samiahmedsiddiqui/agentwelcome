@@ -19,7 +19,7 @@ final class SchemaTest extends WP_UnitTestCase {
 
 		$columns = $wpdb->get_col( 'SHOW COLUMNS FROM ' . Schema::table() );
 
-		$this->assertSame( array( 'post_id', 'markdown', 'content_hash', 'source', 'generator_version', 'generated_at', 'state', 'noindex', 'restricted' ), $columns );
+		$this->assertSame( array( 'post_id', 'paged', 'markdown', 'content_hash', 'source', 'generator_version', 'generated_at', 'state', 'noindex', 'restricted' ), $columns );
 	}
 
 	public function test_upgrading_from_the_first_version_refreshes_copies_and_asks_for_a_warm_up(): void {
@@ -47,7 +47,7 @@ final class SchemaTest extends WP_UnitTestCase {
 		$this->assertSame( Schema::DB_VERSION, get_option( Schema::OPTION ) );
 	}
 
-	public function test_upgrading_from_the_second_version_refreshes_copies_and_asks_for_a_warm_up(): void {
+	public function test_upgrading_from_the_third_version_refreshes_copies_and_asks_for_a_warm_up(): void {
 		global $wpdb;
 
 		$table = Schema::table();
@@ -64,7 +64,7 @@ final class SchemaTest extends WP_UnitTestCase {
 				'noindex'           => 0,
 			)
 		);
-		update_option( Schema::OPTION, '2' );
+		update_option( Schema::OPTION, '3' );
 		delete_option( Schema::WARMUP_OPTION );
 
 		( new Schema() )->maybe_upgrade();
@@ -72,16 +72,15 @@ final class SchemaTest extends WP_UnitTestCase {
 		$this->assertSame( 'stale', $wpdb->get_var( "SELECT state FROM {$table} WHERE post_id = 6" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$this->assertNull( $wpdb->get_var( "SELECT restricted FROM {$table} WHERE post_id = 6" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$this->assertSame( '1', get_option( Schema::WARMUP_OPTION ) );
-		$this->assertSame( '3', get_option( Schema::OPTION ) );
+		$this->assertSame( '4', get_option( Schema::OPTION ) );
 	}
 
-	public function test_the_primary_key_is_the_page_id(): void {
+	public function test_the_primary_key_is_the_page_id_and_the_view_number(): void {
 		global $wpdb;
 
 		$keys = $wpdb->get_results( 'SHOW INDEX FROM ' . Schema::table() . " WHERE Key_name = 'PRIMARY'", ARRAY_A );
 
-		$this->assertCount( 1, $keys );
-		$this->assertSame( 'post_id', $keys[0]['Column_name'] );
+		$this->assertSame( array( 'post_id', 'paged' ), wp_list_pluck( $keys, 'Column_name' ) );
 	}
 
 	public function test_the_installed_version_is_recorded(): void {

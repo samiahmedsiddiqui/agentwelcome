@@ -36,11 +36,12 @@ final class Renderer {
 	/**
 	 * Reads the HTML of a page.
 	 *
-	 * @param WP_Post $post The page.
+	 * @param WP_Post $post  The page.
+	 * @param int     $paged Number of the paginated view, 1 for the page itself.
 	 * @return RenderResult The HTML and how it was obtained.
 	 */
-	public function render( WP_Post $post ): RenderResult {
-		$url = $this->urls->permalink( $post );
+	public function render( WP_Post $post, int $paged = 1 ): RenderResult {
+		$url = $this->urls->view_url( $post, $paged );
 
 		if ( null === $url ) {
 			return $this->fallback( $post, 'no_permalink' );

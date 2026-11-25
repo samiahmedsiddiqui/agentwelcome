@@ -62,6 +62,30 @@ final class StoreTest extends WP_UnitTestCase {
 		return new Entry( $post_id, "# Page\n", sha1( 'page' ), 'loopback', '1.0.0', gmdate( 'Y-m-d H:i:s' ), Entry::FRESH, null, $restricted );
 	}
 
+	public function test_each_view_of_a_page_has_its_own_copy(): void {
+		$view = static fn ( string $markdown, int $paged, ?bool $noindex = null ): Entry => new Entry( 141, $markdown, sha1( $markdown ), 'loopback', '1.0.0', gmdate( 'Y-m-d H:i:s' ), Entry::FRESH, $noindex, null, $paged );
+
+		$this->store->save( $view( "# Blog\n", 1, false ) );
+		$this->store->save( $view( "# Blog page 2\n", 2, true ) );
+
+		$this->assertSame( "# Blog\n", $this->store->get( 141 )->markdown );
+		$this->assertSame( "# Blog page 2\n", $this->store->get( 141, true, 2 )->markdown );
+		$this->assertSame( 2, $this->store->get( 141, false, 2 )->paged );
+		$this->assertNull( $this->store->get( 141, true, 3 ) );
+		$this->assertSame( array( 141 => false ), $this->store->noindex_flags( array( 141 ) ) );
+		$this->assertSame( array( 141 ), $this->store->ids( 0, 10 ) );
+
+		$this->store->save( $view( "# Blog page 2 again\n", 2 ) );
+		$this->assertSame( 2, $this->store->counts()['fresh'] );
+
+		$this->store->mark_stale( 141 );
+		$this->assertSame( Entry::STALE, $this->store->get( 141, true, 2 )->state );
+
+		$this->store->delete( 141 );
+		$this->assertNull( $this->store->get( 141 ) );
+		$this->assertNull( $this->store->get( 141, true, 2 ) );
+	}
+
 	public function test_the_restricted_result_is_read_back(): void {
 		$this->store->save( $this->restricted_entry( 131, 'http_403' ) );
 		$this->store->save( $this->restricted_entry( 132, '' ) );

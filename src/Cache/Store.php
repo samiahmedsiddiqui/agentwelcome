@@ -19,9 +19,10 @@ interface Store {
 	 *
 	 * @param int  $post_id       Page ID.
 	 * @param bool $with_markdown False to skip loading the Markdown text, for callers that only need the state.
+	 * @param int  $paged         Number of the paginated view, 1 for the page itself.
 	 * @return Entry|null The copy, or null when none is stored.
 	 */
-	public function get( int $post_id, bool $with_markdown = true ): ?Entry;
+	public function get( int $post_id, bool $with_markdown = true, int $paged = 1 ): ?Entry;
 
 	/**
 	 * Stores a copy, replacing any earlier one for the same page.
@@ -32,7 +33,7 @@ interface Store {
 	public function save( Entry $entry ): void;
 
 	/**
-	 * Removes the stored copy of a page.
+	 * Removes the stored copies of a page, with all its paginated views.
 	 *
 	 * @param int $post_id Page ID.
 	 * @return void
@@ -40,7 +41,7 @@ interface Store {
 	public function delete( int $post_id ): void;
 
 	/**
-	 * Marks the copy of one page as out of date.
+	 * Marks the copies of one page, with all its paginated views, as out of date.
 	 *
 	 * @param int $post_id Page ID.
 	 * @return void

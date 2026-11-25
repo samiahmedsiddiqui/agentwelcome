@@ -180,7 +180,19 @@ final class Router implements Hookable {
 	 * @return void
 	 */
 	private function serve_page( array $route, string $request ): void {
-		$post = $this->urls->resolve( $route['path'], $route['home_alias'] );
+		$post  = $this->urls->resolve( $route['path'], $route['home_alias'] );
+		$paged = 1;
+
+		if ( null === $post ) {
+			$view = Urls::split_view( $route['path'] );
+			$post = null === $view ? null : $this->urls->resolve( $view['path'] );
+
+			if ( null !== $view && null !== $post && $view['paged'] <= $this->urls->view_count( $post ) ) {
+				$paged = $view['paged'];
+			} else {
+				$post = null;
+			}
+		}
 
 		if ( null === $post ) {
 			$this->redirect_to_canonical( $route, $request );
@@ -193,14 +205,15 @@ final class Router implements Hookable {
 			return;
 		}
 
-		$served = $this->pages->fetch( $post );
+		$served = $this->pages->fetch( $post, $paged );
 
 		if ( null === $served ) {
 			$this->response->unavailable();
 			$this->terminate();
 		}
 
-		if ( $this->eligibility->hides( $served->entry ) ) {
+		// A paginated view that could not be rendered has no copy yet.
+		if ( $this->eligibility->hides( $served->entry ) || ( $paged > 1 && '' === $served->entry->markdown ) ) {
 			$this->not_found( $route, $request );
 			return;
 		}
@@ -208,7 +221,7 @@ final class Router implements Hookable {
 		$this->response->send(
 			$served->entry->markdown,
 			(string) apply_filters( 'agentwelcome_content_type', MarkdownResponse::MARKDOWN, $post ),
-			(string) $this->urls->permalink( $post ),
+			(string) $this->urls->view_url( $post, $paged ),
 			(int) strtotime( $post->post_modified_gmt . ' UTC' ),
 			array( 'X-AgentWelcome-Cache' => $served->cache )
 		);

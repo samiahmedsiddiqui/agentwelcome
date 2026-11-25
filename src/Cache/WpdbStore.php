@@ -29,14 +29,15 @@ final class WpdbStore implements Store {
 	/**
 	 * @param int  $post_id       Page ID.
 	 * @param bool $with_markdown False to leave the Markdown text out of the query.
+	 * @param int  $paged         Number of the paginated view, 1 for the page itself.
 	 * @return Entry|null The stored copy, or null when none exists.
 	 */
-	public function get( int $post_id, bool $with_markdown = true ): ?Entry {
+	public function get( int $post_id, bool $with_markdown = true, int $paged = 1 ): ?Entry {
 		global $wpdb;
 
 		$table   = Schema::table();
-		$columns = $with_markdown ? '*' : "post_id, '' AS markdown, content_hash, source, generator_version, generated_at, state, noindex, restricted";
-		$row     = $wpdb->get_row( $wpdb->prepare( "SELECT {$columns} FROM {$table} WHERE post_id = %d", $post_id ), ARRAY_A );
+		$columns = $with_markdown ? '*' : "post_id, '' AS markdown, content_hash, source, generator_version, generated_at, state, noindex, restricted, paged";
+		$row     = $wpdb->get_row( $wpdb->prepare( "SELECT {$columns} FROM {$table} WHERE post_id = %d AND paged = %d", $post_id, $paged ), ARRAY_A );
 
 		if ( ! is_array( $row ) ) {
 			return null;
@@ -51,7 +52,8 @@ final class WpdbStore implements Store {
 			(string) $row['generated_at'],
 			(string) $row['state'],
 			null === $row['noindex'] ? null : (bool) (int) $row['noindex'],
-			null === $row['restricted'] ? null : (string) $row['restricted']
+			null === $row['restricted'] ? null : (string) $row['restricted'],
+			(int) $row['paged']
 		);
 	}
 
@@ -63,12 +65,13 @@ final class WpdbStore implements Store {
 		global $wpdb;
 
 		$table    = Schema::table();
-		$previous = $wpdb->get_var( $wpdb->prepare( "SELECT content_hash FROM {$table} WHERE post_id = %d", $entry->post_id ) );
+		$previous = $wpdb->get_var( $wpdb->prepare( "SELECT content_hash FROM {$table} WHERE post_id = %d AND paged = %d", $entry->post_id, $entry->paged ) );
 
 		$wpdb->replace(
 			Schema::table(),
 			array(
 				'post_id'           => $entry->post_id,
+				'paged'             => $entry->paged,
 				'markdown'          => $entry->markdown,
 				'content_hash'      => $entry->content_hash,
 				'source'            => $entry->source,
@@ -78,13 +81,13 @@ final class WpdbStore implements Store {
 				'noindex'           => null === $entry->noindex ? null : (int) $entry->noindex,
 				'restricted'        => $entry->restricted,
 			),
-			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
 		);
 
 		OutputCache::purge();
 
 		if ( $previous !== $entry->content_hash ) {
-			$this->announce( $entry->post_id );
+			$this->announce( $entry->post_id, $entry->paged );
 		}
 	}
 
@@ -150,11 +153,12 @@ final class WpdbStore implements Store {
 	 * Tells other code that the Markdown at a page's address has changed, so a host or CDN cache can be purged.
 	 *
 	 * @param int $post_id Page ID.
+	 * @param int $paged   Number of the paginated view, 1 for the page itself.
 	 * @return void
 	 */
-	private function announce( int $post_id ): void {
+	private function announce( int $post_id, int $paged = 1 ): void {
 		$post = get_post( $post_id );
-		$url  = $post instanceof WP_Post ? $this->urls->markdown_url( $post ) : null;
+		$url  = $post instanceof WP_Post ? $this->urls->markdown_url( $post, $paged ) : null;
 
 		if ( null === $url ) {
 			return;
@@ -184,7 +188,7 @@ final class WpdbStore implements Store {
 
 		$table = Schema::table();
 		$marks = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		$rows  = (array) $wpdb->get_results( $wpdb->prepare( "SELECT post_id, noindex FROM {$table} WHERE post_id IN ({$marks})", $ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Placeholders are built from the count of IDs.
+		$rows  = (array) $wpdb->get_results( $wpdb->prepare( "SELECT post_id, noindex FROM {$table} WHERE paged = 1 AND post_id IN ({$marks})", $ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Placeholders are built from the count of IDs.
 		$flags = array();
 
 		foreach ( $rows as $row ) {
@@ -209,7 +213,7 @@ final class WpdbStore implements Store {
 
 		$table   = Schema::table();
 		$marks   = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		$rows    = (array) $wpdb->get_results( $wpdb->prepare( "SELECT post_id, restricted FROM {$table} WHERE post_id IN ({$marks})", $ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Placeholders are built from the count of IDs.
+		$rows    = (array) $wpdb->get_results( $wpdb->prepare( "SELECT post_id, restricted FROM {$table} WHERE paged = 1 AND post_id IN ({$marks})", $ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Placeholders are built from the count of IDs.
 		$reasons = array();
 
 		foreach ( $rows as $row ) {
@@ -249,6 +253,6 @@ final class WpdbStore implements Store {
 
 		$table = Schema::table();
 
-		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$table} WHERE post_id > %d ORDER BY post_id ASC LIMIT %d", $after, $limit ) ) );
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT post_id FROM {$table} WHERE post_id > %d ORDER BY post_id ASC LIMIT %d", $after, $limit ) ) );
 	}
 }

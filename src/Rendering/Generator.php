@@ -43,10 +43,11 @@ final class Generator {
 	 *
 	 * @param WP_Post                                                                   $post      The page.
 	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
+	 * @param int                                                                       $paged     Number of the paginated view, 1 for the page itself.
 	 * @return GeneratedPage The Markdown and where it came from.
 	 */
-	public function generate( WP_Post $post, array $overrides = array() ): GeneratedPage {
-		return $this->build( $post, $this->renderer->render( $post ), $overrides );
+	public function generate( WP_Post $post, array $overrides = array(), int $paged = 1 ): GeneratedPage {
+		return $this->build( $post, $this->renderer->render( $post, $paged ), $overrides, $paged );
 	}
 
 	/**
@@ -80,14 +81,15 @@ final class Generator {
 	 * @param WP_Post                                                                   $post      The page.
 	 * @param RenderResult                                                              $render    The rendered page.
 	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
+	 * @param int                                                                       $paged     Number of the paginated view, 1 for the page itself.
 	 * @return GeneratedPage The Markdown and where it came from.
 	 */
-	public function build( WP_Post $post, RenderResult $render, array $overrides = array() ): GeneratedPage {
+	public function build( WP_Post $post, RenderResult $render, array $overrides = array(), int $paged = 1 ): GeneratedPage {
 		if ( RenderResult::RESTRICTED === $render->source ) {
 			return new GeneratedPage( '', $render->source, '', null, '', null, '', '', '', PageTitle::POST, $render->restricted );
 		}
 
-		$url       = (string) $this->urls->permalink( $post );
+		$url       = (string) $this->urls->view_url( $post, $paged );
 		$selector  = $this->content_selector( $overrides );
 		$extractor = ! empty( $overrides['strip'] ) || ! empty( $overrides['headings'] ) ? $this->extractor->with_extra( $overrides['strip'] ?? array(), $overrides['headings'] ?? array() ) : $this->extractor;
 		$node      = $extractor->extract( $render->html, $selector, $url );
