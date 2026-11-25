@@ -42,7 +42,7 @@ for title, kwargs in {
     "Desc None": dict(),
     "Desc Html": dict(excerpt="<b>Bold</b> [gallery] and &amp; more."),
     "Desc Saved Seo": dict(excerpt="Excerpt text.", _yoast_wpseo_metadesc="Saved Yoast text."),
-    "Desc Late": dict(excerpt="Late excerpt."),
+    "Desc Late": dict(excerpt="Late excerpt.", kit_meta_desc="Late meta."),
 }.items():
     ids[title] = mk(title, **kwargs)
 ids["Desc Blocks"] = mk("Desc Blocks", content=BLOCKS)
@@ -74,6 +74,7 @@ try:
     wpcli("post", "meta", "delete", str(ids["Desc Meta"]), "kit_meta_desc")
     wpcli("agentwelcome", "cache", "regenerate", str(ids["Desc Meta"]))
     check("a page that stops printing one goes back to the excerpt", entry("Desc Meta").endswith(": Excerpt text.") and page_description(ids["Desc Meta"]) == "", entry("Desc Meta"))
+    check("a page with a meta description has it stored", page_description(ids["Desc Late"]) == "Late meta.")
     wpcli("post", "update", str(ids["Desc Late"]), "--post_status=draft")
     check("removing the copy removes the stored description", page_description(ids["Desc Late"]) == "")
 
