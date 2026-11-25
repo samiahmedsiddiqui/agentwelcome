@@ -28,6 +28,7 @@ Filters and examples for changing what the plugin does from code.
 | `agentwelcome_llms_max_items` | Entries per post type in `llms.txt` (default 500). |
 | `agentwelcome_content_type` | Content type of the Markdown response. |
 | `agentwelcome_response_headers` | Response headers. |
+| `agentwelcome_woocommerce_excluded_pages` | WooCommerce pages that are left out: `cart`, `checkout`, `myaccount` and `terms` by default. Return a shorter list to include one. |
 
 ### Excluding from code
 
@@ -44,4 +45,37 @@ add_filter( 'agentwelcome_excluded_post_types', function ( $types ) {
 
 // Hide the editor box for everyone.
 add_filter( 'agentwelcome_show_meta_box', '__return_false' );
+```
+
+## Actions
+
+| Action | Purpose |
+| --- | --- |
+| `agentwelcome_markdown_updated` | The stored Markdown of a page changed, or was removed because the page is no longer served. Receives the post ID and the Markdown address. It does not fire when a refresh produces the same Markdown. |
+| `agentwelcome_cache_cleared` | Every stored copy was cleared. It fires once, with no arguments, not once per page. |
+
+### Purging a host or CDN cache
+
+Servers and CDNs may keep a `.md` address for a few minutes. Purge it when it changes:
+
+```php
+add_action( 'agentwelcome_markdown_updated', function ( $post_id, $url ) {
+	my_cdn_purge( array( $url ) );
+}, 10, 2 );
+
+add_action( 'agentwelcome_cache_cleared', function () {
+	my_cdn_purge_everything();
+} );
+```
+
+The action runs while the page is being stored, so keep the callback fast or queue the purge. A refresh of the whole site fires it once for each page whose Markdown changed.
+
+### WooCommerce
+
+When WooCommerce is active, its cart, checkout, My account and terms pages are not listed in `llms.txt` and are not served as Markdown, because they are different for each visitor. The shop page and products are not affected. To include one of them:
+
+```php
+add_filter( 'agentwelcome_woocommerce_excluded_pages', function ( $pages ) {
+	return array_diff( $pages, array( 'terms' ) );
+} );
 ```

@@ -85,10 +85,11 @@ def clear_env():
 
 def reset_state():
     clear_env()
-    php('foreach ( get_posts( array( "post_type" => "any", "post_status" => "any", "numberposts" => -1 ) ) as $p ) { if ( preg_match( "/^(cache|fallback|gate|dbg|list|rest|bulk|heading)-probe|^(desc|verify|scan|llms|integ|nc|hard)-/", $p->post_name ) ) { wp_delete_post( $p->ID, true ); } }')
+    php('foreach ( get_posts( array( "post_type" => "any", "post_status" => "any", "numberposts" => -1 ) ) as $p ) { if ( preg_match( "/^(cache|fallback|gate|dbg|list|rest|bulk|heading)-probe|^(desc|verify|scan|llms|integ|nc|hard|upd)-/", $p->post_name ) ) { wp_delete_post( $p->ID, true ); } }')
     wpcli("option", "delete", "agentwelcome_settings")
     wpcli("option", "delete", "agentwelcome_llms")
     wpcli("option", "delete", "agentwelcome_changes")
+    php('foreach ( array( "kit_woocommerce", "woocommerce_cart_page_id", "woocommerce_checkout_page_id" ) as $o ) { delete_option( $o ); } @unlink( WP_CONTENT_DIR . "/kit-actions.log" );')
     php('global $wpdb; $wpdb->query("DELETE FROM {$wpdb->prefix}agentwelcome_pages"); $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE \'agentwelcome\\_lock\\_%\'"); delete_option("agentwelcome_batch"); foreach ( array("agentwelcome_generate_post","agentwelcome_regenerate_batch","agentwelcome_prune") as $h ) { wp_unschedule_hook($h); }')
 
 

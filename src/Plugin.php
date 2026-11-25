@@ -49,6 +49,7 @@ use AgentWelcome\Integrations\Acf;
 use AgentWelcome\Integrations\CustomPermalinks;
 use AgentWelcome\Integrations\Elementor;
 use AgentWelcome\Integrations\Seo;
+use AgentWelcome\Integrations\WooCommerce;
 use AgentWelcome\Rendering\Converter;
 use AgentWelcome\Rendering\Extractor;
 use AgentWelcome\Rendering\FrontMatter;
@@ -112,7 +113,7 @@ final class Plugin {
 		$urls        = new Urls( $options );
 		$eligibility = new Eligibility( $post_types, new Exclusions( $options ), $urls );
 		$description = new Description();
-		$store       = new WpdbStore();
+		$store       = new WpdbStore( $urls );
 		$candidates  = new Candidates();
 		$renderer    = new Renderer( $options, $urls );
 		$generator   = new Generator(
@@ -168,6 +169,7 @@ final class Plugin {
 			new Elementor( $invalidator, $batch, $environment ),
 			new Acf( $batch, $environment ),
 			new CustomPermalinks( $urls ),
+			new WooCommerce( $pages ),
 		);
 
 		if ( is_admin() ) {
