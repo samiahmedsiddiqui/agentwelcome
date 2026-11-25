@@ -41,6 +41,12 @@ The result is stored with each generated page, so a change shows after the page 
 
 Untick **Leave out pages set to noindex** under AgentWelcome > Settings > Content > Exclusions to include them again. Verify & Preview and the editor box say when this is the reason a page is not served. WordPress's "Discourage search engines" setting makes every page noindex, and a notice says so. The `agentwelcome_is_noindex` filter can change the result for a page.
 
+## Paginated list pages
+
+A page that lists posts, such as the page set as the blog page, has more views at `/blog/page/2/`. Each is served as Markdown at `/blog/page/2.md`, built from the rendered `/blog/page/2/`, and stored with its own copy, so it is refreshed, left out when noindex or restricted, and checked in Verify & Preview like any page. Changing the list page marks all its views out of date; they are rebuilt the next time they are requested. A number beyond the last view, or `page/1.md`, gets the plain text 404 described below, not a redirect. If a view cannot be rendered, it also gets a 404 until a later attempt works, because the post content is no substitute for it.
+
+`llms.txt` and `llms-full.txt` list the list page once, not its views. By default only the blog page is paginated. For another list page, such as a shop page, return its number of views from the `agentwelcome_page_count` filter.
+
 ## Pages that visitors cannot read
 
 Pages are read as a logged-out visitor, but `llms.txt` is built from the database. A page that a membership or access-control plugin hides from visitors could therefore leak its title, link and description, so it is left out of `llms.txt`, `llms-full.txt` and the `.md` files (the `.md` URL gets the 404 described below). A page counts as restricted when the request for its address gets HTTP 403, or HTTP 401 that does not ask for HTTP Basic credentials, or is redirected to a different path, such as a login page. A trailing slash, http to https, www and non-www, the query string and the plugin's own `agentwelcome_render` argument do not count as a different path. A 401 that asks for HTTP Basic credentials is a protected site, handled by the HTTP Basic authentication setting.
