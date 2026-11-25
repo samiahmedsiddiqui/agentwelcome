@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Cache;
 
+use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Http\Urls;
 use AgentWelcome\Index\OutputCache;
 use WP_Post;
@@ -91,6 +92,7 @@ final class WpdbStore implements Store {
 		global $wpdb;
 
 		$removed = $wpdb->delete( Schema::table(), array( 'post_id' => $post_id ), array( '%d' ) );
+		delete_post_meta( $post_id, PostMeta::TITLE );
 		OutputCache::purge();
 
 		if ( $removed ) {
@@ -130,6 +132,7 @@ final class WpdbStore implements Store {
 		$table = Schema::table();
 
 		$wpdb->query( "DELETE FROM {$table}" );
+		delete_post_meta_by_key( PostMeta::TITLE );
 		OutputCache::purge();
 
 		/**

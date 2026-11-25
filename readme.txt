@@ -192,6 +192,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 == Changelog ==
 
 = 1.1.0 =
+* Change: the title in the Markdown, llms.txt and llms-full.txt is now the page's own title without the site name. A setting switches back to the WordPress post title.
 * New: the actions `agentwelcome_markdown_updated` and `agentwelcome_cache_cleared`, so a host or CDN cache can be purged when the Markdown changes.
 * New: more answers in the FAQ.
 * New: WooCommerce cart, checkout, My account and terms pages are left out of llms.txt and the Markdown pages.

@@ -18,4 +18,6 @@ final class PostMeta {
 	public const EXCLUDE = '_agentwelcome_exclude';
 	/** Description for llms.txt that is set in the editor box. */
 	public const DESCRIPTION = '_agentwelcome_description';
+	/** Title of the page used in the Markdown, stored when it is generated. */
+	public const TITLE = '_agentwelcome_page_title';
 }

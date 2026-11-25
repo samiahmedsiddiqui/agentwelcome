@@ -22,6 +22,7 @@ Filters and examples for changing what the plugin does from code.
 | `agentwelcome_meta_description_keys` | Post meta keys read as the SEO meta description, in order. |
 | `agentwelcome_check_site_address` | Return `false` to turn off the automatic pause when the site address changes. |
 | `agentwelcome_compare_ignore` | Regular expressions for text that Verify & Preview and the scan leave out when comparing. |
+| `agentwelcome_title_site_names` | Site names removed from page titles, as a list of strings. Defaults to the Site Title and the page's `og:site_name`. Receives the list and the `WP_Post`. |
 | `agentwelcome_llms_txt` | Final `llms.txt` content. |
 | `agentwelcome_llms_full_txt` | Final `llms-full.txt` content. |
 | `agentwelcome_llms_full_max_bytes` | Size limit of `llms-full.txt` (default 5,000,000 bytes). |
