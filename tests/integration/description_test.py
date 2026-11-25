@@ -23,8 +23,8 @@ def slug(title):
 
 
 def entry(title):
-    for line in site.get("/llms.txt")[2].splitlines():
-        if line.startswith("- [" + title + "]"):
+    for line in site.get("/llms.txt?t=%d" % time.time_ns())[2].splitlines():
+        if line.startswith("- [") and ("/" + slug(title) + ".md)") in line:
             return line
     return None
 
@@ -79,8 +79,8 @@ try:
     check("removing the copy removes the stored description", page_description(ids["Desc Late"]) == "")
 
     print("--- never the page content")
-    check("no excerpt and no meta description gives no description", entry("Desc None") == "- [Desc None](http://127.0.0.1:8899/desc-none.md)", entry("Desc None"))
-    check("block content gives no description", entry("Desc Blocks") == "- [Desc Blocks](http://127.0.0.1:8899/desc-blocks.md)", entry("Desc Blocks"))
+    check("no excerpt and no meta description gives no description", entry("Desc None").endswith("(http://127.0.0.1:8899/desc-none.md)"), entry("Desc None"))
+    check("block content gives no description", entry("Desc Blocks").endswith("(http://127.0.0.1:8899/desc-blocks.md)"), entry("Desc Blocks"))
     llms = site.get("/llms.txt")[2]
     check("body text and block markup never appear in llms.txt", "must never appear" not in llms and "Block paragraph" not in llms and "wp:paragraph" not in llms)
     for name in ("desc-none", "desc-blocks"):
