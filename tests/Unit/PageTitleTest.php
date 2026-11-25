@@ -51,7 +51,7 @@ final class PageTitleTest extends TestCase {
 			'hyphen in a word is kept'        => array( 'A-B', array(), 'A-B' ),
 			'only a separator is kept'        => array( '|', array(), '|' ),
 			'only the name'          => array( 'Site Name', array( 'Site Name' ), 'Site Name' ),
-			'would be empty'         => array( '| Site Name', array( 'Site Name' ), '| Site Name' ),
+			'separator trimmed first' => array( '| Site Name', array( 'Site Name' ), 'Site Name' ),
 			'second name matches'    => array( 'Product | Brand', array( 'Site Name', 'Brand' ), 'Product' ),
 			'empty names are skipped' => array( 'Product | Site', array( '', 'Site' ), 'Product' ),
 			'special characters'     => array( 'Product | A+B (Co.)', array( 'A+B (Co.)' ), 'Product' ),
