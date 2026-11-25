@@ -167,6 +167,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 * New: the actions `agentwelcome_markdown_updated` and `agentwelcome_cache_cleared`, so a host or CDN cache can be purged when the Markdown changes.
 * New: WooCommerce cart, checkout, My account and terms pages are left out of llms.txt and the Markdown pages.
 * Fix: a `.md` address that is not served now gets a plain text 404 from the plugin, so another plugin or a host rule can no longer redirect it to the homepage.
+* Fix: links that touch in the HTML, such as pagination numbers, now have a space between them in the Markdown.
 
 = 1.0.0 =
 * Initial release.
