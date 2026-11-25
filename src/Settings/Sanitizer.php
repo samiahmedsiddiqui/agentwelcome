@@ -71,6 +71,8 @@ final class Sanitizer {
 				'content_selector'     => implode( ', ', $content['valid'] ),
 				'strip_selectors'      => implode( "\n", $strip['valid'] ),
 				'heading_selectors'    => $rules->to_text( $headings['valid'] ),
+				'title_source'         => isset( $input['title_source'] ) && 'post' === $input['title_source'] ? 'post' : 'page',
+				'title_strip_site'     => ! empty( $input['title_strip_site'] ),
 				'show_meta_box'        => ! empty( $input['show_meta_box'] ),
 				'http_auth_enabled'    => ! empty( $input['http_auth_enabled'] ),
 				'allowed_environments' => isset( $input['allowed_environments'] ) && is_array( $input['allowed_environments'] )

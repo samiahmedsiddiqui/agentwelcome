@@ -11,6 +11,7 @@ namespace AgentWelcome\Index;
 
 use AgentWelcome\Cache\Store;
 use AgentWelcome\Content\Eligibility;
+use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Http\Urls;
 use AgentWelcome\Settings\LlmsOptions;
 use Generator;
@@ -146,7 +147,19 @@ final class LlmsFullTxt {
 		$body  = null === $entry ? '' : self::strip_front_matter( $entry->markdown );
 		$url   = $this->urls->permalink( $post );
 
-		return '' === $body || null === $url ? null : self::block( SingleLine::from( get_the_title( $post ) ), $url, $body );
+		return '' === $body || null === $url ? null : self::block( SingleLine::from( self::title( $post ) ), $url, $body );
+	}
+
+	/**
+	 * Title of a page: the one stored when it was generated, or the WordPress title.
+	 *
+	 * @param WP_Post $post The page.
+	 * @return string The title.
+	 */
+	private static function title( WP_Post $post ): string {
+		$stored = get_post_meta( $post->ID, PostMeta::TITLE, true );
+
+		return is_string( $stored ) && '' !== $stored ? $stored : get_the_title( $post );
 	}
 
 	/**

@@ -18,6 +18,29 @@ $locked   = $options->http_auth_from_constants();
 $has_pass = '' !== (string) $options->get( 'http_auth_password', '' );
 ?>
 <section class="agentwelcome-card">
+	<h2><?php esc_html_e( 'Page title', 'agentwelcome' ); ?></h2>
+	<p class="agentwelcome-intro"><?php esc_html_e( 'The title in the Markdown, llms.txt and llms-full.txt. Saving a change here refreshes the stored Markdown in the background.', 'agentwelcome' ); ?></p>
+	<div class="agentwelcome-field">
+		<label>
+			<input type="radio" name="<?php echo esc_attr( $name ); ?>[title_source]" value="page" <?php checked( 'post' !== (string) $options->get( 'title_source', 'page' ) ); ?> />
+			<?php esc_html_e( "Use the page's own title (default)", 'agentwelcome' ); ?>
+		</label><br />
+		<label>
+			<input type="radio" name="<?php echo esc_attr( $name ); ?>[title_source]" value="post" <?php checked( 'post', (string) $options->get( 'title_source', 'page' ) ); ?> />
+			<?php esc_html_e( 'Use the WordPress post title', 'agentwelcome' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'The page title is the title tag visitors and search engines see. The post title is used when a page has none.', 'agentwelcome' ); ?></p>
+	</div>
+	<div class="agentwelcome-field">
+		<label>
+			<input type="checkbox" name="<?php echo esc_attr( $name ); ?>[title_strip_site]" value="1" <?php checked( (bool) $options->get( 'title_strip_site', true ) ); ?> />
+			<?php esc_html_e( 'Remove the site name from page titles', 'agentwelcome' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'Removes "| Site Name" from the start or end of a title, only when it matches your Site Title or the og:site_name of the page. The homepage keeps its full title.', 'agentwelcome' ); ?></p>
+	</div>
+</section>
+
+<section class="agentwelcome-card">
 	<h2><?php esc_html_e( 'Page content', 'agentwelcome' ); ?></h2>
 	<p class="agentwelcome-intro"><?php esc_html_e( 'Choose which part of each page becomes the Markdown. Use Verify & Preview to try changes before saving. Saving a change here refreshes the stored Markdown in the background.', 'agentwelcome' ); ?></p>
 	<div class="agentwelcome-field">

@@ -45,6 +45,24 @@ $messages = array(
 	<dl class="agentwelcome-result-grid">
 		<dt><?php esc_html_e( 'Post', 'agentwelcome' ); ?></dt>
 		<dd>#<?php echo esc_html( (string) $vars['post']->ID ); ?> (<?php echo esc_html( $vars['post']->post_type ); ?>)</dd>
+		<?php if ( null !== $result->page && '' !== $result->page->title ) : ?>
+			<dt><?php esc_html_e( 'Title', 'agentwelcome' ); ?></dt>
+			<dd>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: title used, 2: where it came from. */
+						__( '%1$s (%2$s)', 'agentwelcome' ),
+						$result->page->title,
+						'page' === $result->page->used ? __( 'page title', 'agentwelcome' ) : __( 'post title', 'agentwelcome' )
+					)
+				);
+				?>
+				<?php if ( '' !== $result->page->original && $result->page->original !== $result->page->title ) : ?>
+					<br /><span class="description"><?php echo esc_html( sprintf( /* translators: %s: title tag of the page. */ __( 'Title tag: %s', 'agentwelcome' ), $result->page->original ) ); ?></span>
+				<?php endif; ?>
+			</dd>
+		<?php endif; ?>
 		<?php if ( VerifyResult::NOT_SERVED !== $state && null !== $vars['md_url'] ) : ?>
 			<dt><?php esc_html_e( 'Markdown URL', 'agentwelcome' ); ?></dt>
 			<dd><a href="<?php echo esc_url( $vars['md_url'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $vars['md_url'] ); ?></a></dd>
