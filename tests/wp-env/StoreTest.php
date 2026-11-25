@@ -26,8 +26,32 @@ final class StoreTest extends WP_UnitTestCase {
 		$this->store->clear();
 	}
 
-	private function entry( int $post_id, string $markdown = "# Title\n", string $state = Entry::FRESH ): Entry {
-		return new Entry( $post_id, $markdown, sha1( $markdown ), 'loopback', '1.0.0', gmdate( 'Y-m-d H:i:s' ), $state );
+	private function entry( int $post_id, string $markdown = "# Title\n", string $state = Entry::FRESH, ?bool $noindex = null ): Entry {
+		return new Entry( $post_id, $markdown, sha1( $markdown ), 'loopback', '1.0.0', gmdate( 'Y-m-d H:i:s' ), $state, $noindex );
+	}
+
+	public function test_the_noindex_result_is_read_back(): void {
+		$this->store->save( $this->entry( 111, "# A\n", Entry::FRESH, true ) );
+		$this->store->save( $this->entry( 112, "# B\n", Entry::FRESH, false ) );
+		$this->store->save( $this->entry( 113, "# C\n" ) );
+
+		$this->assertTrue( $this->store->get( 111 )->noindex );
+		$this->assertFalse( $this->store->get( 112, false )->noindex );
+		$this->assertNull( $this->store->get( 113 )->noindex );
+	}
+
+	public function test_noindex_flags_cover_only_the_pages_that_have_a_copy(): void {
+		$this->store->save( $this->entry( 121, "# A\n", Entry::FRESH, true ) );
+		$this->store->save( $this->entry( 122, "# B\n" ) );
+
+		$this->assertSame(
+			array(
+				121 => true,
+				122 => null,
+			),
+			$this->store->noindex_flags( array( 121, 122, 123 ) )
+		);
+		$this->assertSame( array(), $this->store->noindex_flags( array() ) );
 	}
 
 	public function test_a_saved_copy_is_read_back_unchanged(): void {

@@ -128,7 +128,9 @@ AgentWelcome falls back to the post content. That output is thinner, because fie
 
 = Why is a page I can see in the browser missing from llms.txt? =
 
-If an SEO plugin (Yoast SEO, Rank Math, All in One SEO, SEOPress or The SEO Framework) marks the page as noindex, AgentWelcome leaves it out by default. The AgentWelcome box on the edit screen says so. To include such pages, untick "Leave out pages set to noindex" under AgentWelcome > Settings > Content > Exclusions.
+If the page says noindex, AgentWelcome leaves it out by default. It reads the robots meta tag and the X-Robots-Tag header of the page, so a post type that your SEO plugin sets to noindex is left out too. The AgentWelcome box on the edit screen and Verify & Preview say so. To include such pages, untick "Leave out pages set to noindex" under AgentWelcome > Settings > Content > Exclusions.
+
+A page that has not been generated yet is not listed either. After an install or an update the plugin generates every page in the background, so the list fills in over a few minutes.
 
 = Do the stored copies update when I change my theme, ACF options or Elementor templates? =
 
@@ -164,6 +166,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 == Changelog ==
 
 = 1.1.0 =
+* Change: noindex is read from the page's robots meta tag and X-Robots-Tag header instead of from SEO plugin settings, so a whole post type or a theme setting is respected. llms.txt lists only pages that have been generated, and every page is generated in the background after an update.
 * New: the actions `agentwelcome_markdown_updated` and `agentwelcome_cache_cleared`, so a host or CDN cache can be purged when the Markdown changes.
 * New: WooCommerce cart, checkout, My account and terms pages are left out of llms.txt and the Markdown pages.
 * Fix: a `.md` address that is not served now gets a plain text 404 from the plugin, so another plugin or a host rule can no longer redirect it to the homepage.

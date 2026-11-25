@@ -13,6 +13,7 @@ use AgentWelcome\Cache\Store;
 use AgentWelcome\Content\Eligibility;
 use AgentWelcome\Rendering\Generator;
 use AgentWelcome\Rendering\Renderer;
+use AgentWelcome\Rendering\Robots;
 use WP_Post;
 
 defined( 'ABSPATH' ) || exit;
@@ -50,6 +51,23 @@ final class Verifier {
 
 		$render = $this->renderer->render( $post );
 		$page   = $this->generator->build( $post, $render, $overrides );
+
+		if ( $this->eligibility->hides_result( $page->noindex ) ) {
+			$sources = array(
+				Robots::META   => __( 'the robots meta tag', 'agentwelcome' ),
+				Robots::HEADER => __( 'the X-Robots-Tag header', 'agentwelcome' ),
+				'filter'       => __( 'a filter', 'agentwelcome' ),
+			);
+
+			return new VerifyResult(
+				VerifyResult::NOT_SERVED,
+				$this->eligibility->describe( 'noindex' ) . ' ' . sprintf(
+					/* translators: %s: where noindex was found, such as the robots meta tag. */
+					__( 'Found in %s.', 'agentwelcome' ),
+					$sources[ $page->noindex_source ] ?? $page->noindex_source
+				)
+			);
+		}
 		$entry  = $this->store->get( $post->ID );
 		$blocks = $coverage ? $this->generator->text_blocks( $render, $overrides ) : null;
 		$result = new VerifyResult(

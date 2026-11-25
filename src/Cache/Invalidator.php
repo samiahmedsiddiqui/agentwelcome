@@ -12,6 +12,7 @@ namespace AgentWelcome\Cache;
 use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Content\PostTypes;
 use AgentWelcome\Contracts\Hookable;
+use AgentWelcome\Index\OutputCache;
 use AgentWelcome\Settings\Options;
 use WP_Post;
 
@@ -185,11 +186,7 @@ final class Invalidator implements Hookable {
 		}
 
 		if ( $this->changed( $previous, $current, array( 'exclude_noindex' ) ) ) {
-			if ( $current['exclude_noindex'] ) {
-				$this->batch->schedule_prune();
-			} else {
-				$this->batch->start( false );
-			}
+			OutputCache::purge();
 		}
 	}
 

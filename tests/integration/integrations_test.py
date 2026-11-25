@@ -1,4 +1,4 @@
-"""Noindex handling, SEO meta refresh, ACF options, Elementor saves, theme and plugin change notices."""
+"""Noindex setting text, SEO meta refresh, ACF options, Elementor saves, theme and plugin change notices."""
 from kit import *
 
 reset_state()
@@ -68,52 +68,7 @@ try:
     print("--- noindex: the setting")
     page = admin.get("/wp-admin/admin.php?page=agentwelcome")[2]
     check("the box is ticked by default", re.search(r'name="agentwelcome_settings\[exclude_noindex\]"[^>]*checked', page) is not None)
-    check("with an explanation", "Leave out pages set to noindex" in page and "Only the setting on the page itself is read" in page)
-
-    print("--- noindex: nothing happens when no SEO plugin is active")
-    wpcli("post", "meta", "update", str(ids["integ-a"]), "_yoast_wpseo_meta-robots-noindex", "1")
-    check("a leftover value of a plugin that is not active is ignored", md("integ-a")[0] == 200 and listed("integ-a"))
-
-    print("--- noindex: each plugin's own value")
-    set_env(noindex_all=True)
-    cases = [
-        ("Yoast noindex", "_yoast_wpseo_meta-robots-noindex", "1", True),
-        ("Yoast index", "_yoast_wpseo_meta-robots-noindex", "2", False),
-        ("SEOPress noindex", "_seopress_robots_index", "yes", True),
-        ("The SEO Framework noindex", "_genesis_noindex", "1", True),
-        ("The SEO Framework index", "_genesis_noindex", "-1", False),
-    ]
-    slug = "integ-b"
-    for label, key, value, excluded in cases:
-        wpcli("post", "meta", "delete", str(ids[slug]), "_yoast_wpseo_meta-robots-noindex")
-        wpcli("post", "meta", "delete", str(ids[slug]), "_seopress_robots_index")
-        wpcli("post", "meta", "delete", str(ids[slug]), "_genesis_noindex")
-        wpcli("post", "meta", "update", str(ids[slug]), key, value)
-        check(label + ": " + ("left out" if excluded else "kept"), (md(slug)[0] != 200 and not listed(slug) and not in_full(slug)) if excluded else (md(slug)[0] == 200 and listed(slug)), md(slug)[0])
-    wpcli("post", "meta", "delete", str(ids[slug]), "_genesis_noindex")
-    php("update_post_meta(%d, 'rank_math_robots', array('index'));" % ids[slug])
-    check("Rank Math index: kept", md(slug)[0] == 200)
-    php("update_post_meta(%d, 'rank_math_robots', array('noindex','nofollow'));" % ids[slug])
-    check("Rank Math noindex: left out", md(slug)[0] != 200 and not listed(slug))
-    wpcli("post", "meta", "delete", str(ids[slug]), "rank_math_robots")
-    check("meta removed: back in the list", md(slug)[0] == 200 and listed(slug))
-
-    print("--- noindex: effects")
-    slug = "integ-c"
-    wpcli("post", "meta", "update", str(ids[slug]), "_yoast_wpseo_meta-robots-noindex", "1")
-    php("do_action('agentwelcome_generate_post', %d);" % ids[slug])
-    check("the stored copy of a noindex page is deleted when it is refreshed", row(ids[slug]) is None, row(ids[slug]))
-    reason = admin.get("/wp-admin/post.php?post=%d&action=edit" % ids[slug])[2]
-    check("the editor box explains why", "marks the page as noindex" in reason, re.findall(r"[^.]*noindex[^.]*\.", reason)[:2])
-    r = save_main(show_meta_box="1")
-    check("unticking is the absence of the box: saving without it turns the setting off", r[0] == 302 and jphp("echo json_encode(get_option('agentwelcome_settings')['exclude_noindex']);") is False)
-    check("noindex pages are served again", md(slug)[0] == 200 and listed(slug))
-    check("and the refresh to generate them was started", batch_running())
-    clear_batch()
-    r = save_main(show_meta_box="1", exclude_noindex="1")
-    check("ticking it again leaves them out", md(slug)[0] != 200 and not listed(slug))
-    check("and schedules the cleanup of stored copies", len(events("agentwelcome_prune")) >= 1)
-    wpcli("post", "meta", "delete", str(ids[slug]), "_yoast_wpseo_meta-robots-noindex")
+    check("with an explanation of what is read", "Leave out pages set to noindex" in page and "robots meta tag and the X-Robots-Tag header" in page)
     clear_env()
 
     set_env(no_cron=True)

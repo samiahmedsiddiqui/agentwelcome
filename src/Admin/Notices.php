@@ -40,6 +40,7 @@ final class Notices {
 			'inactive'   => null === $reason ? null : $this->environment->describe( $reason ),
 			'resume_url' => 'site_address_changed' === $reason && current_user_can( 'manage_options' ) ? wp_nonce_url( admin_url( 'admin-post.php?action=agentwelcome_resume' ), 'agentwelcome_resume' ) : '',
 			'pretty'     => Urls::has_pretty_permalinks(),
+			'discourage' => '0' === (string) get_option( 'blog_public' ),
 			'yoast_llms' => is_array( $yoast ) && ! empty( $yoast['enable_llms_txt'] ),
 			'llms_file'  => file_exists( get_home_path() . 'llms.txt' ),
 			'full_file'  => file_exists( get_home_path() . 'llms-full.txt' ),

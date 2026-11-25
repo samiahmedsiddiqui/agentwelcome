@@ -107,6 +107,22 @@ final class Generator {
 
 		$markdown = (string) apply_filters( 'agentwelcome_markdown', $front . "\n" . trim( $body ) . "\n", $post );
 
-		return new GeneratedPage( $markdown, $render->source, $render->notice );
+		$source = RenderResult::LOOPBACK === $render->source ? Robots::source( $render->html, $render->robots ) : '';
+		/**
+		 * Filters whether a page counts as noindex. The page's own robots meta tag and X-Robots-Tag header decide by default.
+		 *
+		 * @param bool    $noindex Whether the page says noindex.
+		 * @param WP_Post $post    The page.
+		 */
+		$noindex = (bool) apply_filters( 'agentwelcome_is_noindex', '' !== $source, $post );
+
+		if ( $noindex && '' === $source ) {
+			$source = 'filter';
+		}
+
+		// A page built without its rendered HTML has no robots information, so its result is unknown.
+		$known = RenderResult::LOOPBACK === $render->source || $noindex;
+
+		return new GeneratedPage( $markdown, $render->source, $render->notice, $known ? $noindex : null, $source );
 	}
 }

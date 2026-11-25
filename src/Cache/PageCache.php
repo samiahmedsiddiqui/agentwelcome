@@ -241,7 +241,8 @@ final class PageCache implements Hookable {
 			$page->source,
 			AGENTWELCOME_VERSION,
 			gmdate( 'Y-m-d H:i:s' ),
-			$fallback ? Entry::STALE : Entry::FRESH
+			$fallback ? Entry::STALE : Entry::FRESH,
+			$page->noindex
 		);
 	}
 }

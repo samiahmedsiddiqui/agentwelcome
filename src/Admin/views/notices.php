@@ -53,6 +53,9 @@ if ( null !== $vars['inactive'] ) :
 		?>
 	</p></div>
 <?php endif; ?>
+<?php if ( $vars['discourage'] ) : ?>
+	<div class="notice notice-warning"><p><?php esc_html_e( 'Your site asks search engines not to index it (Settings, Reading, "Discourage search engines"), so every page says noindex and is left out of llms.txt and the Markdown pages. Turn that setting off, or untick "Leave out pages set to noindex" in the settings, to include them.', 'agentwelcome' ); ?></p></div>
+<?php endif; ?>
 <?php if ( $vars['yoast_llms'] ) : ?>
 	<div class="notice notice-warning"><p>
 		<?php

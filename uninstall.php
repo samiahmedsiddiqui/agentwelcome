@@ -43,6 +43,7 @@ function agentwelcome_uninstall_site(): void {
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'agentwelcome_lock_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Locks are stored as options.
 
 	delete_option( 'agentwelcome_db_version' );
+	delete_option( 'agentwelcome_warmup' );
 	delete_option( 'agentwelcome_site_fingerprint' );
 	delete_option( 'agentwelcome_batch' );
 	delete_option( 'agentwelcome_scan' );

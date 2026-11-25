@@ -27,7 +27,11 @@ Works with default WordPress permalinks and with the [Custom Permalinks](https:/
 
 ## noindex pages
 
-By default, pages that Yoast SEO, Rank Math, All in One SEO, SEOPress or The SEO Framework mark as noindex are left out of `llms.txt`, `llms-full.txt` and the `.md` files (the `.md` URL then gets the 404 described below), and their stored copy is removed. Only the page's own setting counts, not the rules of a whole post type, and only the plugins that are active are read, so a value left behind by a removed plugin is ignored. Untick **Leave out pages set to noindex** under AgentWelcome > Settings > Content > Exclusions to include them again. The editor box and Verify & Preview say when this is the reason a page is not served.
+By default, a page that says noindex is left out of `llms.txt`, `llms-full.txt` and the `.md` files (the `.md` URL then gets the 404 described below). A page says noindex when the robots meta tag in its `<head>` or its `X-Robots-Tag` header has `noindex` or `none`. The plugin reads this from the page it already fetches, so it works whatever sets it: an SEO plugin on one page or on a whole post type, the theme, or the server. Directives for one named crawler, such as `googlebot: noindex`, are ignored.
+
+The result is stored with each generated page, so a change shows after the page has been refreshed, which happens a few seconds after it is saved. `llms.txt` and `llms-full.txt` list only pages that have been generated, because until then it is not known whether a page says noindex. After an install or an update the plugin generates every page once in the background, so the list fills in over a few minutes, longer on a large site. A page built from the post content only, because the rendered page could not be read, is treated as not noindex.
+
+Untick **Leave out pages set to noindex** under AgentWelcome > Settings > Content > Exclusions to include them again. Verify & Preview and the editor box say when this is the reason a page is not served. WordPress's "Discourage search engines" setting makes every page noindex, and a notice says so. The `agentwelcome_is_noindex` filter can change the result for a page.
 
 ## Addresses that are not served
 

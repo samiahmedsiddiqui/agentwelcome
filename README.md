@@ -16,7 +16,7 @@ The Markdown is built from the rendered page, so ACF fields, Gutenberg blocks, E
 - Optional comment lines in `robots.txt` that point to these files.
 - A `.md` version of every page, for example `/about.md`.
 - All public post types enabled by default, with a setting to exclude any of them.
-- Hide individual pages from the editor, or exclude by ID, URL pattern or taxonomy term. Pages set to noindex by an SEO plugin are left out by default.
+- Hide individual pages from the editor, or exclude by ID, URL pattern or taxonomy term. Pages whose source says noindex are left out by default, whether the SEO plugin, the theme or the server sets it.
 - Per-page description for `llms.txt`. When empty it uses the meta description from Yoast SEO, Rank Math, All in One SEO, SEOPress or The SEO Framework, then the excerpt. The page content is never used, so a page without any of these is listed without a description.
 - Verify & Preview: checks that the stored Markdown matches the page, shows a rendered preview and the changes, and updates it in one click.
 - Check all pages: a background scan that lists every stored page that has drifted from its live page.

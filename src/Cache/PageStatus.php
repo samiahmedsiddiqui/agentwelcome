@@ -59,6 +59,10 @@ final class PageStatus {
 			return array_merge( $base, $this->unavailable( $this->eligibility->describe( $reason ) ) );
 		}
 
+		if ( $this->eligibility->hides( $entry ) ) {
+			return array_merge( $base, $this->unavailable( $this->eligibility->describe( 'noindex' ) ) );
+		}
+
 		$base['can_regenerate'] = true;
 		$state                  = Freshness::classify( $entry, AGENTWELCOME_VERSION );
 

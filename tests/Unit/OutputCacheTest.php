@@ -72,7 +72,7 @@ final class OutputCacheTest extends TestCase {
 	public function meta_keys(): array {
 		return array(
 			'SEO description'  => array( '_yoast_wpseo_metadesc', true ),
-			'noindex'          => array( '_genesis_noindex', true ),
+			'robots choice'    => array( '_genesis_noindex', false ),
 			'hidden page'      => array( '_agentwelcome_exclude', true ),
 			'own description'  => array( '_agentwelcome_description', true ),
 			'unrelated'        => array( '_thumbnail_id', false ),

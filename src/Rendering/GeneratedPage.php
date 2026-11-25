@@ -15,13 +15,17 @@ defined( 'ABSPATH' ) || exit;
 final class GeneratedPage {
 
 	/**
-	 * @param string $markdown Markdown including the front matter block.
-	 * @param string $source   Where the content came from: a RenderResult constant.
-	 * @param string $notice   A sentence for the admin when the rendered page could not be used.
+	 * @param string    $markdown Markdown including the front matter block.
+	 * @param string    $source   Where the content came from: a RenderResult constant.
+	 * @param string    $notice   A sentence for the admin when the rendered page could not be used.
+	 * @param bool|null $noindex Whether the page says noindex, or null when the rendered page could not be read.
+	 * @param string    $noindex_source Where the noindex was found: a Robots constant, or filter.
 	 */
 	public function __construct(
 		public string $markdown,
 		public string $source,
-		public string $notice = ''
+		public string $notice = '',
+		public ?bool $noindex = null,
+		public string $noindex_source = ''
 	) {}
 }

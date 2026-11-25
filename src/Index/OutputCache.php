@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace AgentWelcome\Index;
 
 use AgentWelcome\Content\Description;
-use AgentWelcome\Content\Noindex;
 use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Contracts\Hookable;
 use AgentWelcome\Settings\LlmsOptions;
@@ -94,7 +93,7 @@ final class OutputCache implements Hookable {
 	 * @return void
 	 */
 	public function on_meta( mixed $meta_id, mixed $post_id, mixed $meta_key ): void {
-		$keys = array_merge( Description::SEO_META_KEYS, Noindex::KEYS, array( PostMeta::EXCLUDE, PostMeta::DESCRIPTION ) );
+		$keys = array_merge( Description::SEO_META_KEYS, array( PostMeta::EXCLUDE, PostMeta::DESCRIPTION ) );
 
 		if ( is_string( $meta_key ) && in_array( $meta_key, $keys, true ) ) {
 			self::purge();
