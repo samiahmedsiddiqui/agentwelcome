@@ -239,6 +239,10 @@ final class PageCache implements Hookable {
 			'' === $page->meta ? delete_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION ) : update_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION, $page->meta );
 		}
 
+		if ( ! $fallback && '' !== $page->title ) {
+			update_post_meta( $post->ID, PostMeta::TITLE, $page->title );
+		}
+
 		return new Entry(
 			$post->ID,
 			$page->markdown,

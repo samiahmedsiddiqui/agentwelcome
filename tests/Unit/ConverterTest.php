@@ -111,6 +111,12 @@ final class ConverterTest extends TestCase {
 			'code fence untouched'  => array( "<p>a</p><pre><code>x\n\n\ny</code></pre>", "a\n\n```\nx\n\n\ny\n```\n" ),
 			'banner role gone'      => array( '<div role="banner"><p>Logo</p></div><p>Body</p>', "Body\n" ),
 			'contentinfo role gone' => array( '<p>Body</p><div role="contentinfo"><p>Legal</p></div>', "Body\n" ),
+			'touching span and links' => array( '<p><span>1</span><a href="/p/2/">2</a><a href="/p/3/">3</a></p>', "1 [2](https://example.com/p/2/) [3](https://example.com/p/3/)\n" ),
+			'touching links and next' => array( '<p><a href="/a/">A</a><a href="/b/">Next</a><span>x</span></p>', "[A](https://example.com/a/) [Next](https://example.com/b/) x\n" ),
+			'link with space between' => array( '<p><a href="/a/">A</a> <a href="/b/">B</a></p>', "[A](https://example.com/a/) [B](https://example.com/b/)\n" ),
+			'text touching link' => array( '<p>un<a href="/h/">happy</a></p>', "un[happy](https://example.com/h/)\n" ),
+			'punctuation after link' => array( '<p><a href="/a/">A</a><span>,</span> done</p>', "[A](https://example.com/a/), done\n" ),
+			'sentence with link' => array( '<p>See <a href="/a/">A</a>, then <a href="/b/">B</a>.</p>', "See [A](https://example.com/a/), then [B](https://example.com/b/).\n" ),
 		);
 	}
 

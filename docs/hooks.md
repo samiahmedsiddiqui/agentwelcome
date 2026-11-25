@@ -21,6 +21,7 @@ Filters and examples for changing what the plugin does from code.
 | `agentwelcome_description` | The description used in the metadata and `llms.txt`, after the editor box, the page's meta description and the excerpt were tried in that order. |
 | `agentwelcome_check_site_address` | Return `false` to turn off the automatic pause when the site address changes. |
 | `agentwelcome_compare_ignore` | Regular expressions for text that Verify & Preview and the scan leave out when comparing. |
+| `agentwelcome_title_site_names` | Site names removed from page titles, as a list of strings. Defaults to the Site Title and the page's `og:site_name`. Receives the list and the `WP_Post`. |
 | `agentwelcome_llms_txt` | Final `llms.txt` content. |
 | `agentwelcome_llms_full_txt` | Final `llms-full.txt` content. |
 | `agentwelcome_llms_full_max_bytes` | Size limit of `llms-full.txt` (default 5,000,000 bytes). |
@@ -28,6 +29,7 @@ Filters and examples for changing what the plugin does from code.
 | `agentwelcome_content_type` | Content type of the Markdown response. |
 | `agentwelcome_answer_unserved_md` | Return `false` to stop the plugin from answering a `.md` address that is not served with its own 404, and leave it to WordPress. Receives the route and the requested path. |
 | `agentwelcome_response_headers` | Response headers. |
+| `agentwelcome_ai_crawlers` | User agents of the AI crawlers that Verify & Preview checks against robots.txt (GPTBot, ClaudeBot, PerplexityBot and others by default). |
 | `agentwelcome_woocommerce_excluded_pages` | WooCommerce pages that are left out: `cart`, `checkout`, `myaccount` and `terms` by default. Return a shorter list to include one. |
 
 ### Excluding from code

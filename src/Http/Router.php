@@ -17,6 +17,7 @@ use AgentWelcome\Index\LlmsFullTxt;
 use AgentWelcome\Index\LlmsTxt;
 use AgentWelcome\Index\OutputCache;
 use AgentWelcome\Settings\LlmsOptions;
+use AgentWelcome\Settings\Options;
 use WP;
 
 defined( 'ABSPATH' ) || exit;
@@ -33,6 +34,7 @@ final class Router implements Hookable {
 	 * @param LlmsFullTxt      $llms_full    Builds llms-full.txt.
 	 * @param LlmsOptions      $llms_options Settings of the llms files.
 	 * @param MarkdownResponse $response     Sends the answer.
+	 * @param Options|null     $options      Saved settings.
 	 */
 	public function __construct(
 		private Urls $urls,
@@ -42,7 +44,8 @@ final class Router implements Hookable {
 		private LlmsTxt $llms,
 		private LlmsFullTxt $llms_full,
 		private LlmsOptions $llms_options,
-		private MarkdownResponse $response
+		private MarkdownResponse $response,
+		private ?Options $options = null
 	) {}
 
 	/**
@@ -66,6 +69,7 @@ final class Router implements Hookable {
 		$route = $this->urls->parse_route( (string) $wp->request );
 
 		if ( null === $route ) {
+			$this->maybe_serve_negotiated( $wp );
 			return;
 		}
 
@@ -82,6 +86,78 @@ final class Router implements Hookable {
 		}
 
 		$this->serve_page( $route, trim( (string) $wp->request, '/' ) );
+	}
+
+	/**
+	 * Sends the Markdown of a page that was requested by its normal address with an Accept header that prefers Markdown.
+	 *
+	 * Anything that is not served is left to WordPress, so the HTML page answers as usual.
+	 *
+	 * @param WP $wp The WordPress request.
+	 * @return void
+	 */
+	private function maybe_serve_negotiated( WP $wp ): void {
+		if ( null === $this->options || ! $this->options->get( 'markdown_by_accept' ) || ! $this->is_page_request( $wp ) ) {
+			return;
+		}
+
+		$accept = isset( $_SERVER['HTTP_ACCEPT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT'] ) ) : '';
+
+		if ( ! AcceptHeader::prefers_markdown( $accept ) ) {
+			return;
+		}
+
+		$post = $this->urls->resolve( trim( (string) $wp->request, '/' ) );
+
+		if ( null === $post || ! $this->eligibility->is_eligible( $post ) ) {
+			return;
+		}
+
+		$served = $this->pages->fetch( $post );
+
+		if ( null === $served ) {
+			return;
+		}
+
+		$this->response->send(
+			$served->entry->markdown,
+			(string) apply_filters( 'agentwelcome_content_type', MarkdownResponse::MARKDOWN, $post ),
+			(string) $this->urls->permalink( $post ),
+			(int) strtotime( $post->post_modified_gmt . ' UTC' ),
+			array(
+				'X-AgentWelcome-Cache' => $served->cache,
+				'Vary'                 => 'Accept',
+				'Cache-Control'        => 'private, no-store',
+			)
+		);
+
+		$this->terminate();
+	}
+
+	/**
+	 * Whether the request is for a front end page, not the admin, REST, AJAX, a feed, a preview, a search or a file.
+	 *
+	 * @param WP $wp The WordPress request.
+	 * @return bool True when it can be a page.
+	 */
+	private function is_page_request( WP $wp ): bool {
+		if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return false;
+		}
+
+		$request = trim( (string) $wp->request, '/' );
+
+		if ( 1 === preg_match( '#^(wp-json|wp-admin|wp-login\.php)(/|$)|(^|/)(feed|embed|trackback)(/|$)#', $request ) ) {
+			return false;
+		}
+
+		foreach ( array( 's', 'preview', 'preview_id', 'feed', 'rest_route', 'embed', 'customize_changeset_uuid' ) as $var ) {
+			if ( isset( $wp->query_vars[ $var ] ) || isset( $_GET[ $var ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only checks that the argument exists.
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
