@@ -103,7 +103,9 @@ final class Renderer {
 				return 'http_' . $code;
 			}
 
-			return new RenderResult( $body, RenderResult::LOOPBACK );
+			$robots = wp_remote_retrieve_header( $response, 'x-robots-tag' );
+
+			return new RenderResult( $body, RenderResult::LOOPBACK, '', implode( "\n", (array) $robots ) );
 		}
 
 		return 'too_many_redirects';

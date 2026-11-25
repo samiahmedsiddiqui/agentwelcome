@@ -35,7 +35,7 @@ final class WpdbStore implements Store {
 		global $wpdb;
 
 		$table   = Schema::table();
-		$columns = $with_markdown ? '*' : "post_id, '' AS markdown, content_hash, source, generator_version, generated_at, state";
+		$columns = $with_markdown ? '*' : "post_id, '' AS markdown, content_hash, source, generator_version, generated_at, state, noindex";
 		$row     = $wpdb->get_row( $wpdb->prepare( "SELECT {$columns} FROM {$table} WHERE post_id = %d", $post_id ), ARRAY_A );
 
 		if ( ! is_array( $row ) ) {
@@ -49,7 +49,8 @@ final class WpdbStore implements Store {
 			(string) $row['source'],
 			(string) $row['generator_version'],
 			(string) $row['generated_at'],
-			(string) $row['state']
+			(string) $row['state'],
+			null === $row['noindex'] ? null : (bool) (int) $row['noindex']
 		);
 	}
 
@@ -73,8 +74,9 @@ final class WpdbStore implements Store {
 				'generator_version' => $entry->generator_version,
 				'generated_at'      => $entry->generated_at,
 				'state'             => $entry->state,
+				'noindex'           => null === $entry->noindex ? null : (int) $entry->noindex,
 			),
-			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
+			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d' )
 		);
 
 		OutputCache::purge();
@@ -163,6 +165,31 @@ final class WpdbStore implements Store {
 		 * @param string $url     Markdown address of the page.
 		 */
 		do_action( 'agentwelcome_markdown_updated', $post_id, $url );
+	}
+
+	/**
+	 * @param int[] $post_ids Page IDs.
+	 * @return array<int, bool|null> Result by page ID, for the pages that have a stored copy.
+	 */
+	public function noindex_flags( array $post_ids ): array {
+		global $wpdb;
+
+		$ids = array_values( array_filter( array_map( 'absint', $post_ids ) ) );
+
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$table = Schema::table();
+		$marks = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows  = (array) $wpdb->get_results( $wpdb->prepare( "SELECT post_id, noindex FROM {$table} WHERE post_id IN ({$marks})", $ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Placeholders are built from the count of IDs.
+		$flags = array();
+
+		foreach ( $rows as $row ) {
+			$flags[ (int) $row['post_id'] ] = null === $row['noindex'] ? null : (bool) (int) $row['noindex'];
+		}
+
+		return $flags;
 	}
 
 	/**

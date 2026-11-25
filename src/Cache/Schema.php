@@ -17,9 +17,12 @@ defined( 'ABSPATH' ) || exit;
 final class Schema implements Hookable {
 
 	/** Version of the table layout. Raise it when the columns change. */
-	public const DB_VERSION = '1';
+	public const DB_VERSION = '2';
 	/** Option that records the installed table version. */
 	public const OPTION = 'agentwelcome_db_version';
+
+	/** Option that asks for every page to be generated once, after an install or an upgrade. */
+	public const WARMUP_OPTION = 'agentwelcome_warmup';
 
 	/**
 	 * Name of the table, with the site prefix.
@@ -60,7 +63,9 @@ final class Schema implements Hookable {
 	 * @return void
 	 */
 	public function maybe_upgrade(): void {
-		if ( self::DB_VERSION === get_option( self::OPTION ) ) {
+		$installed = get_option( self::OPTION );
+
+		if ( self::DB_VERSION === $installed ) {
 			return;
 		}
 
@@ -80,11 +85,18 @@ final class Schema implements Hookable {
 			generator_version varchar(32) NOT NULL default '',
 			generated_at datetime NOT NULL,
 			state varchar(10) NOT NULL default 'fresh',
+			noindex tinyint(1) default NULL,
 			PRIMARY KEY  (post_id),
 			KEY state (state)
 			) {$collate};"
 		);
 
+		// Copies made before the noindex column existed are refreshed in the background, and every page is generated once so llms.txt can be built.
+		if ( false !== $installed ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET state = %s", Entry::STALE ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table.
+		}
+
+		update_option( self::WARMUP_OPTION, '1', true );
 		update_option( self::OPTION, self::DB_VERSION, true );
 	}
 }

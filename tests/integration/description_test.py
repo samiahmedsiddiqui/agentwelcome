@@ -48,8 +48,8 @@ for title, kwargs in {
 ids["Desc Blocks"] = mk("Desc Blocks", content=BLOCKS)
 
 try:
-    print("--- a page without a stored copy uses the excerpt in llms.txt")
-    check("excerpt before the page is generated", entry("Desc Meta").endswith(": Excerpt text."), entry("Desc Meta"))
+    print("--- a page without a stored copy is not listed")
+    check("not listed before the page is generated", entry("Desc Meta") is None, entry("Desc Meta"))
 
     print("--- front matter and llms.txt follow the order")
     for title in ids:

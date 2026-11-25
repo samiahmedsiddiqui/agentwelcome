@@ -29,6 +29,7 @@ use AgentWelcome\Cache\Lock;
 use AgentWelcome\Cache\PageCache;
 use AgentWelcome\Cache\PageStatus;
 use AgentWelcome\Cache\Schema;
+use AgentWelcome\Cache\Warmup;
 use AgentWelcome\Cache\WpdbStore;
 use AgentWelcome\Cli\Command;
 use AgentWelcome\Content\Description;
@@ -147,7 +148,7 @@ final class Plugin {
 		$scan        = new Scan( $store, $verifier, $environment, $coverage, $lock );
 
 		$llms_options = new LlmsOptions();
-		$llms         = new LlmsTxt( $post_types, $eligibility, $urls, $description, $llms_options );
+		$llms         = new LlmsTxt( $post_types, $eligibility, $urls, $description, $llms_options, $store );
 		$llms_full    = new LlmsFullTxt( $store, $eligibility, $urls, $llms_options );
 
 		$this->components = array(
@@ -170,6 +171,7 @@ final class Plugin {
 			new Elementor( $invalidator, $batch, $environment ),
 			new Acf( $batch, $environment ),
 			new CustomPermalinks( $urls ),
+			new Warmup( $batch, $environment ),
 			new WooCommerce( $pages ),
 		);
 

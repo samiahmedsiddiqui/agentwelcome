@@ -3,6 +3,8 @@ import html as htmllib
 from kit import *
 
 reset_state()
+
+warm()
 admin = Client()
 check("admin logged in", admin.login())
 wpcli("user", "create", "kiteditor", "kiteditor@example.com", "--role=editor", "--user_pass=kit-pass-2")
@@ -228,4 +230,5 @@ finally:
     wpcli("option", "update", "blog_public", "1")
     wpcli("user", "delete", "kiteditor", "--yes")
     reset_state()
+    warm()
 done("LLMS")

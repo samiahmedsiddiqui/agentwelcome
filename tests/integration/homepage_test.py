@@ -2,6 +2,8 @@
 from kit import *
 
 reset_state()
+
+warm()
 admin = Client()
 check("logged in", admin.login())
 site = anon()
@@ -63,4 +65,6 @@ wpcli("post", "delete", str(pid), "--force")
 check("without the page, /index.md is used again", "(http://127.0.0.1:8899/index.md)" in llms())
 
 reset_state()
+
+warm()
 done("HOMEPAGE")

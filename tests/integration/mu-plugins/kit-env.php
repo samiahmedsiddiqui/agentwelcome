@@ -65,9 +65,6 @@ if ( is_readable( $kit_file ) ) {
 	if ( ! empty( $kit['llms_full_max'] ) ) {
 		add_filter( 'agentwelcome_llms_full_max_bytes', static fn() => (int) $kit['llms_full_max'] );
 	}
-	if ( ! empty( $kit['noindex_all'] ) ) {
-		add_filter( 'agentwelcome_noindex_sources', static fn( $sources ) => array_fill_keys( array_keys( $sources ), true ) );
-	}
 	if ( ! empty( $kit['files_cap'] ) ) {
 		add_filter( 'agentwelcome_files_capability', static fn() => (string) $kit['files_cap'] );
 	}

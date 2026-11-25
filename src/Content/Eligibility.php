@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Content;
 
+use AgentWelcome\Cache\Entry;
 use AgentWelcome\Http\Urls;
 use WP_Post;
 
@@ -36,6 +37,26 @@ final class Eligibility {
 	 */
 	public function is_eligible( WP_Post $post ): bool {
 		return null === $this->reason( $post );
+	}
+
+	/**
+	 * Whether a stored copy is left out because its page said noindex.
+	 *
+	 * @param Entry|null $entry The stored copy.
+	 * @return bool True when it is left out.
+	 */
+	public function hides( ?Entry $entry ): bool {
+		return null !== $entry && $this->hides_result( $entry->noindex );
+	}
+
+	/**
+	 * Whether a noindex result is left out.
+	 *
+	 * @param bool|null $noindex Result of the page, or null when unknown.
+	 * @return bool True when the page is noindex and such pages are left out.
+	 */
+	public function hides_result( ?bool $noindex ): bool {
+		return true === $noindex && $this->exclusions->leaves_out_noindex();
 	}
 
 	/**
@@ -85,7 +106,7 @@ final class Eligibility {
 			'excluded_page'      => __( 'The page is hidden from AgentWelcome in the editor.', 'agentwelcome' ),
 			'excluded_pattern'   => __( 'It matches an ID or URL pattern in the exclusion list.', 'agentwelcome' ),
 			'excluded_term'      => __( 'It belongs to an excluded taxonomy term.', 'agentwelcome' ),
-			'noindex'            => __( 'An SEO plugin marks the page as noindex. Untick "Leave out pages set to noindex" in the settings to include it.', 'agentwelcome' ),
+			'noindex'            => __( 'The page says noindex in its robots meta tag or X-Robots-Tag header. Untick "Leave out pages set to noindex" in the settings to include it.', 'agentwelcome' ),
 			'filtered'           => __( 'A filter excluded it. WooCommerce cart, checkout, My account and terms pages are left out this way.', 'agentwelcome' ),
 		);
 

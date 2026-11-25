@@ -200,6 +200,11 @@ final class Router implements Hookable {
 			$this->terminate();
 		}
 
+		if ( $this->eligibility->hides( $served->entry ) ) {
+			$this->not_found( $route, $request );
+			return;
+		}
+
 		$this->response->send(
 			$served->entry->markdown,
 			(string) apply_filters( 'agentwelcome_content_type', MarkdownResponse::MARKDOWN, $post ),

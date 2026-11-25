@@ -144,8 +144,13 @@ final class LlmsFullTxt {
 		}
 
 		$entry = $this->store->get( $id );
-		$body  = null === $entry ? '' : self::strip_front_matter( $entry->markdown );
-		$url   = $this->urls->permalink( $post );
+
+		if ( $this->eligibility->hides( $entry ) ) {
+			return null;
+		}
+
+		$body = null === $entry ? '' : self::strip_front_matter( $entry->markdown );
+		$url  = $this->urls->permalink( $post );
 
 		return '' === $body || null === $url ? null : self::block( SingleLine::from( self::title( $post ) ), $url, $body );
 	}

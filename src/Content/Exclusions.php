@@ -14,23 +14,13 @@ use WP_Post;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Pages the site owner chose to leave out, plus pages an SEO plugin marks as noindex. */
+/** Pages the site owner chose to leave out, and whether pages that say noindex are left out too. */
 final class Exclusions {
 
 	/**
-	 * Reads the noindex choice from SEO plugins.
-	 *
-	 * @var Noindex
+	 * @param Options $options Saved settings.
 	 */
-	private Noindex $noindex;
-
-	/**
-	 * @param Options      $options Saved settings.
-	 * @param Noindex|null $noindex Noindex reader. A new one is created when omitted.
-	 */
-	public function __construct( private Options $options, ?Noindex $noindex = null ) {
-		$this->noindex = $noindex ?? new Noindex();
-	}
+	public function __construct( private Options $options ) {}
 
 	/**
 	 * Finds the rule that leaves a page out.
@@ -49,10 +39,6 @@ final class Exclusions {
 
 		if ( $this->matches_term( $post ) ) {
 			return 'excluded_term';
-		}
-
-		if ( $this->options->get( 'exclude_noindex', true ) && $this->noindex->is_noindex( $post ) ) {
-			return 'noindex';
 		}
 
 		return null;
@@ -126,5 +112,14 @@ final class Exclusions {
 		}
 
 		return $path;
+	}
+
+	/**
+	 * Whether pages that say noindex are left out.
+	 *
+	 * @return bool True when the setting is on.
+	 */
+	public function leaves_out_noindex(): bool {
+		return (bool) $this->options->get( 'exclude_noindex', true );
 	}
 }

@@ -2,7 +2,7 @@
 
 How the generated Markdown is stored, refreshed and removed.
 
-Generated Markdown is stored in a `{prefix}agentwelcome_pages` table. There is no expiry: a copy stays until the page changes or you clear it.
+Generated Markdown is stored in a `{prefix}agentwelcome_pages` table. There is no expiry: a copy stays until the page changes or you clear it. After an install or an update, every page is generated once in the background, because `llms.txt` lists only pages that have been generated.
 
 - Saving, trashing, unpublishing or password-protecting a page updates or removes its copy. A refresh runs in the background (WP-Cron) a few seconds after the save, so fields saved by ACF or a page builder are included.
 - A page with no copy is generated while the request waits. If another request is already generating it, the request waits up to 5 seconds and then answers `503` with `Retry-After: 10`.

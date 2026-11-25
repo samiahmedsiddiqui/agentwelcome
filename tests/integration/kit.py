@@ -93,6 +93,11 @@ def reset_state():
     php('global $wpdb; $wpdb->query("DELETE FROM {$wpdb->prefix}agentwelcome_pages"); $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE \'agentwelcome\\_lock\\_%\'"); delete_option("agentwelcome_batch"); foreach ( array("agentwelcome_generate_post","agentwelcome_regenerate_batch","agentwelcome_prune") as $h ) { wp_unschedule_hook($h); }')
 
 
+def warm():
+    """Generates every published page, so llms.txt lists them. It only lists pages that have been generated."""
+    php('foreach ( get_posts( array( "post_type" => "any", "post_status" => "publish", "numberposts" => -1, "fields" => "ids" ) ) as $id ) { do_action( "agentwelcome_generate_post", $id ); }')
+
+
 def row(post_id):
     return jphp('global $wpdb; echo json_encode($wpdb->get_row("SELECT * FROM {$wpdb->prefix}agentwelcome_pages WHERE post_id=%d", ARRAY_A));' % post_id)
 

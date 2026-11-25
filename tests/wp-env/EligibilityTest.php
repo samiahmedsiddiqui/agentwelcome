@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Tests\WpEnv;
 
+use AgentWelcome\Cache\Entry;
 use AgentWelcome\Content\Eligibility;
 use AgentWelcome\Content\Exclusions;
 use AgentWelcome\Content\PostMeta;
@@ -72,21 +73,28 @@ final class EligibilityTest extends WP_UnitTestCase {
 		$this->assertSame( 'excluded_pattern', $this->eligibility->reason( $page ) );
 	}
 
-	public function test_a_page_marked_noindex_by_an_active_seo_plugin_is_not_served(): void {
+	public function test_a_stored_noindex_result_hides_the_page(): void {
 		$page = $this->page();
-		update_post_meta( $page->ID, '_yoast_wpseo_meta-robots-noindex', '1' );
-		add_filter( 'agentwelcome_noindex_sources', static fn( array $sources ): array => array_merge( $sources, array( '_yoast_wpseo_meta-robots-noindex' => true ) ) );
 
-		$this->assertSame( 'noindex', $this->eligibility->reason( $page ) );
+		$this->assertTrue( $this->eligibility->hides( $this->entry( $page->ID, true ) ) );
+		$this->assertFalse( $this->eligibility->hides( $this->entry( $page->ID, false ) ) );
+		$this->assertFalse( $this->eligibility->hides( $this->entry( $page->ID, null ) ) );
+		$this->assertFalse( $this->eligibility->hides( null ) );
 	}
 
 	public function test_a_noindex_page_is_served_when_the_setting_is_off(): void {
 		$page = $this->page();
-		update_post_meta( $page->ID, '_yoast_wpseo_meta-robots-noindex', '1' );
-		add_filter( 'agentwelcome_noindex_sources', static fn( array $sources ): array => array_merge( $sources, array( '_yoast_wpseo_meta-robots-noindex' => true ) ) );
 		update_option( Options::KEY, array( 'exclude_noindex' => false ) );
 
-		$this->assertNull( $this->eligibility->reason( $page ) );
+		$this->assertFalse( $this->eligibility->hides( $this->entry( $page->ID, true ) ) );
+	}
+
+	/**
+	 * @param int       $post_id Page ID.
+	 * @param bool|null $noindex Result stored with the copy.
+	 */
+	private function entry( int $post_id, ?bool $noindex ): Entry {
+		return new Entry( $post_id, "# Page\n", sha1( 'page' ), 'loopback', '1.0.0', gmdate( 'Y-m-d H:i:s' ), Entry::FRESH, $noindex );
 	}
 
 	public function test_a_filter_can_exclude_a_page(): void {

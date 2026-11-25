@@ -19,7 +19,32 @@ final class SchemaTest extends WP_UnitTestCase {
 
 		$columns = $wpdb->get_col( 'SHOW COLUMNS FROM ' . Schema::table() );
 
-		$this->assertSame( array( 'post_id', 'markdown', 'content_hash', 'source', 'generator_version', 'generated_at', 'state' ), $columns );
+		$this->assertSame( array( 'post_id', 'markdown', 'content_hash', 'source', 'generator_version', 'generated_at', 'state', 'noindex' ), $columns );
+	}
+
+	public function test_upgrading_from_the_first_version_refreshes_copies_and_asks_for_a_warm_up(): void {
+		global $wpdb;
+
+		$wpdb->insert(
+			Schema::table(),
+			array(
+				'post_id'           => 5,
+				'markdown'          => '# A',
+				'content_hash'      => sha1( 'a' ),
+				'source'            => 'loopback',
+				'generator_version' => '1.0.0',
+				'generated_at'      => gmdate( 'Y-m-d H:i:s' ),
+				'state'             => 'fresh',
+			)
+		);
+		update_option( Schema::OPTION, '1' );
+		delete_option( Schema::WARMUP_OPTION );
+
+		( new Schema() )->maybe_upgrade();
+
+		$this->assertSame( 'stale', $wpdb->get_var( 'SELECT state FROM ' . Schema::table() . ' WHERE post_id = 5' ) );
+		$this->assertSame( '1', get_option( Schema::WARMUP_OPTION ) );
+		$this->assertSame( Schema::DB_VERSION, get_option( Schema::OPTION ) );
 	}
 
 	public function test_the_primary_key_is_the_page_id(): void {

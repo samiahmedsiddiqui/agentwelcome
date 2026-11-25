@@ -49,7 +49,7 @@ php('global $wpdb; $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}agentwelcom
 php('delete_option("agentwelcome_db_version");')
 wpcli("plugin", "deactivate", "agentwelcome")
 wpcli("plugin", "activate", "agentwelcome")
-check("the table is recreated by the version check, not by activation", php(TABLE) == "1" and php("echo get_option('agentwelcome_db_version');") == "1")
+check("the table is recreated by the version check, not by activation", php(TABLE) == "1" and php("echo get_option('agentwelcome_db_version');") == php("echo AgentWelcome\\Cache\\Schema::DB_VERSION;"))
 populate()
 out = wpcli("plugin", "deactivate", "agentwelcome") + wpcli("plugin", "uninstall", "agentwelcome", "--skip-delete")
 after = state()

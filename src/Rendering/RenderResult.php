@@ -23,10 +23,12 @@ final class RenderResult {
 	 * @param string $html   HTML of the page.
 	 * @param string $source Either LOOPBACK or FALLBACK.
 	 * @param string $notice A sentence for the admin when the fallback was used.
+	 * @param string $robots Values of the X-Robots-Tag response header, one per line.
 	 */
 	public function __construct(
 		public string $html,
 		public string $source,
-		public string $notice = ''
+		public string $notice = '',
+		public string $robots = ''
 	) {}
 }

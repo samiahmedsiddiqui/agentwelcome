@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Index;
 
+use AgentWelcome\Cache\Store;
 use AgentWelcome\Content\Description;
 use AgentWelcome\Content\Eligibility;
 use AgentWelcome\Content\PostMeta;
@@ -28,13 +29,15 @@ final class LlmsTxt {
 	 * @param Urls        $urls        Builds the addresses.
 	 * @param Description $description Finds the description of a page.
 	 * @param LlmsOptions $options     Settings of the llms files.
+	 * @param Store       $store       Stored copies, which hold whether a page says noindex.
 	 */
 	public function __construct(
 		private PostTypes $post_types,
 		private Eligibility $eligibility,
 		private Urls $urls,
 		private Description $description,
-		private LlmsOptions $options
+		private LlmsOptions $options,
+		private Store $store
 	) {}
 
 	/**
@@ -145,8 +148,14 @@ final class LlmsTxt {
 		);
 
 		$entries = array();
+		$flags   = $this->store->noindex_flags( wp_list_pluck( $posts, 'ID' ) );
 
 		foreach ( $posts as $post ) {
+			// A page that has not been generated yet is not listed, because it is not known whether it says noindex.
+			if ( ! array_key_exists( $post->ID, $flags ) || $this->eligibility->hides_result( $flags[ $post->ID ] ) ) {
+				continue;
+			}
+
 			$entry = $this->entry( $post );
 
 			if ( null !== $entry ) {

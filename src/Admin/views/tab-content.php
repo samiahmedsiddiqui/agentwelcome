@@ -41,7 +41,7 @@ $options = $vars['options'];
 			<input type="checkbox" name="<?php echo esc_attr( $name ); ?>[exclude_noindex]" value="1" <?php checked( (bool) $options->get( 'exclude_noindex', true ) ); ?> />
 			<?php esc_html_e( 'Leave out pages set to noindex', 'agentwelcome' ); ?>
 		</label>
-		<p class="description"><?php esc_html_e( 'Skips pages your SEO plugin marks as noindex, in llms.txt, llms-full.txt and as Markdown. Only the setting on the page itself is read.', 'agentwelcome' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Skips pages whose source says noindex, in llms.txt, llms-full.txt and as Markdown. It reads the robots meta tag and the X-Robots-Tag header of the page, so a whole post type that your SEO plugin sets to noindex is left out too.', 'agentwelcome' ); ?></p>
 	</div>
 </section>
 

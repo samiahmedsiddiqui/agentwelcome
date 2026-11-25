@@ -69,6 +69,14 @@ interface Store {
 	public function counts(): array;
 
 	/**
+	 * Whether stored pages said noindex when they were generated.
+	 *
+	 * @param int[] $post_ids Page IDs.
+	 * @return array<int, bool|null> Result by page ID, for the pages that have a stored copy. Null means unknown.
+	 */
+	public function noindex_flags( array $post_ids ): array;
+
+	/**
 	 * Lists the pages that have a stored copy.
 	 *
 	 * @param int $after Only IDs above this one.
