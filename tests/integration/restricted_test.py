@@ -87,7 +87,7 @@ try:
     check("setup: served and listed", served("integ-rs-403"))
     restrict(forbidden, "403")
     check("it is left out of the .md address, llms.txt and llms-full.txt", left_out("integ-rs-403"), md("integ-rs-403")[0])
-    check("the .md address answers with the plain text 404", md("integ-rs-403")[0] == 404 and "text/plain" in md("integ-rs-403")[1].get("Content-Type", ""), md("integ-rs-403")[:2])
+    check("the .md address answers with the plain text 404", md("integ-rs-403")[0] == 404 and "text/plain" in md("integ-rs-403")[1].get("content-type", ""), md("integ-rs-403")[:2])
     r = row(forbidden)
     check("the reason is stored and no text is kept", r["restricted"] == "http_403" and r["markdown"] == "", r)
     check("the post content is not used as a fallback", r["source"] == "restricted", r["source"])
