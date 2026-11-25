@@ -27,6 +27,7 @@ Filters and examples for changing what the plugin does from code.
 | `agentwelcome_llms_full_max_bytes` | Size limit of `llms-full.txt` (default 5,000,000 bytes). |
 | `agentwelcome_llms_max_items` | Entries per post type in `llms.txt` (default 500). |
 | `agentwelcome_content_type` | Content type of the Markdown response. |
+| `agentwelcome_answer_unserved_md` | Return `false` to stop the plugin from answering a `.md` address that is not served with its own 404, and leave it to WordPress. Receives the route and the requested path. |
 | `agentwelcome_response_headers` | Response headers. |
 | `agentwelcome_woocommerce_excluded_pages` | WooCommerce pages that are left out: `cart`, `checkout`, `myaccount` and `terms` by default. Return a shorter list to include one. |
 

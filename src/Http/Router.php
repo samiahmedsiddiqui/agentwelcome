@@ -108,10 +108,12 @@ final class Router implements Hookable {
 
 		if ( null === $post ) {
 			$this->redirect_to_canonical( $route, $request );
+			$this->not_found( $route, $request );
 			return;
 		}
 
 		if ( ! $this->eligibility->is_eligible( $post ) ) {
+			$this->not_found( $route, $request );
 			return;
 		}
 
@@ -154,6 +156,29 @@ final class Router implements Hookable {
 		}
 
 		wp_safe_redirect( $target, 301 );
+		$this->terminate();
+	}
+
+	/**
+	 * Answers a Markdown address that is not served with a plain text 404, before WordPress or another plugin can redirect it.
+	 *
+	 * @param array{type: string, path: string, home_alias: bool} $route   The parsed route.
+	 * @param string                                              $request The requested path.
+	 * @return void
+	 */
+	private function not_found( array $route, string $request ): void {
+		/**
+		 * Filters whether a Markdown address that is not served gets a 404 from this plugin.
+		 *
+		 * @param bool   $answer  True to answer with a 404, false to leave the request to WordPress.
+		 * @param array  $route   The parsed route.
+		 * @param string $request The requested path.
+		 */
+		if ( ! apply_filters( 'agentwelcome_answer_unserved_md', true, $route, $request ) ) {
+			return;
+		}
+
+		$this->response->not_found();
 		$this->terminate();
 	}
 

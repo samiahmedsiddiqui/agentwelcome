@@ -28,6 +28,7 @@ run "integrations and change notices" python3 integrations_test.py
 run "integrations without cron" python3 integrations_nocron_test.py
 run "capability" python3 capability_test.py
 run "hardening" python3 hardening_test.py
+run "not found" python3 notfound_test.py
 run "basic auth and cron" python3 basicauth_test.py
 run "description" python3 description_test.py
 run "headings" python3 headings_test.py
