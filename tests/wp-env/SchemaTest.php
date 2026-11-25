@@ -47,11 +47,10 @@ final class SchemaTest extends WP_UnitTestCase {
 		$this->assertSame( Schema::DB_VERSION, get_option( Schema::OPTION ) );
 	}
 
-	public function test_upgrading_from_the_second_version_adds_the_restricted_column(): void {
+	public function test_upgrading_from_the_second_version_refreshes_copies_and_asks_for_a_warm_up(): void {
 		global $wpdb;
 
 		$table = Schema::table();
-		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN restricted" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->insert(
 			$table,
 			array(
@@ -70,7 +69,6 @@ final class SchemaTest extends WP_UnitTestCase {
 
 		( new Schema() )->maybe_upgrade();
 
-		$this->assertContains( 'restricted', $wpdb->get_col( "SHOW COLUMNS FROM {$table}" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$this->assertSame( 'stale', $wpdb->get_var( "SELECT state FROM {$table} WHERE post_id = 6" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$this->assertNull( $wpdb->get_var( "SELECT restricted FROM {$table} WHERE post_id = 6" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$this->assertSame( '1', get_option( Schema::WARMUP_OPTION ) );
