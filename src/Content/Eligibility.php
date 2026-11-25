@@ -86,7 +86,7 @@ final class Eligibility {
 			'excluded_pattern'   => __( 'It matches an ID or URL pattern in the exclusion list.', 'agentwelcome' ),
 			'excluded_term'      => __( 'It belongs to an excluded taxonomy term.', 'agentwelcome' ),
 			'noindex'            => __( 'An SEO plugin marks the page as noindex. Untick "Leave out pages set to noindex" in the settings to include it.', 'agentwelcome' ),
-			'filtered'           => __( 'A filter excluded it.', 'agentwelcome' ),
+			'filtered'           => __( 'A filter excluded it. WooCommerce cart, checkout, My account and terms pages are left out this way.', 'agentwelcome' ),
 		);
 
 		return $labels[ $reason ] ?? $reason;

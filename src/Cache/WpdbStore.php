@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Cache;
 
+use AgentWelcome\Http\Urls;
 use AgentWelcome\Index\OutputCache;
+use WP_Post;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -17,6 +19,11 @@ defined( 'ABSPATH' ) || exit;
 
 /** Store backed by the agentwelcome_pages table. The cached llms files are cleared whenever stored copies change. */
 final class WpdbStore implements Store {
+
+	/**
+	 * @param Urls $urls Builds the Markdown address for the update action.
+	 */
+	public function __construct( private Urls $urls ) {}
 
 	/**
 	 * @param int  $post_id       Page ID.
@@ -52,6 +59,9 @@ final class WpdbStore implements Store {
 	public function save( Entry $entry ): void {
 		global $wpdb;
 
+		$table    = Schema::table();
+		$previous = $wpdb->get_var( $wpdb->prepare( "SELECT content_hash FROM {$table} WHERE post_id = %d", $entry->post_id ) );
+
 		$wpdb->replace(
 			Schema::table(),
 			array(
@@ -67,6 +77,10 @@ final class WpdbStore implements Store {
 		);
 
 		OutputCache::purge();
+
+		if ( $previous !== $entry->content_hash ) {
+			$this->announce( $entry->post_id );
+		}
 	}
 
 	/**
@@ -76,8 +90,12 @@ final class WpdbStore implements Store {
 	public function delete( int $post_id ): void {
 		global $wpdb;
 
-		$wpdb->delete( Schema::table(), array( 'post_id' => $post_id ), array( '%d' ) );
+		$removed = $wpdb->delete( Schema::table(), array( 'post_id' => $post_id ), array( '%d' ) );
 		OutputCache::purge();
+
+		if ( $removed ) {
+			$this->announce( $post_id );
+		}
 	}
 
 	/**
@@ -113,6 +131,34 @@ final class WpdbStore implements Store {
 
 		$wpdb->query( "DELETE FROM {$table}" );
 		OutputCache::purge();
+
+		/**
+		 * Fires after every stored copy has been cleared.
+		 */
+		do_action( 'agentwelcome_cache_cleared' );
+	}
+
+	/**
+	 * Tells other code that the Markdown at a page's address has changed, so a host or CDN cache can be purged.
+	 *
+	 * @param int $post_id Page ID.
+	 * @return void
+	 */
+	private function announce( int $post_id ): void {
+		$post = get_post( $post_id );
+		$url  = $post instanceof WP_Post ? $this->urls->markdown_url( $post ) : null;
+
+		if ( null === $url ) {
+			return;
+		}
+
+		/**
+		 * Fires after the stored Markdown of a page changed or was removed.
+		 *
+		 * @param int    $post_id Page ID.
+		 * @param string $url     Markdown address of the page.
+		 */
+		do_action( 'agentwelcome_markdown_updated', $post_id, $url );
 	}
 
 	/**

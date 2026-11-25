@@ -12,6 +12,8 @@ namespace AgentWelcome\Tests\WpEnv;
 use AgentWelcome\Cache\Candidates;
 use AgentWelcome\Cache\Entry;
 use AgentWelcome\Cache\WpdbStore;
+use AgentWelcome\Http\Urls;
+use AgentWelcome\Settings\Options;
 use WP_UnitTestCase;
 
 final class CandidatesTest extends WP_UnitTestCase {
@@ -24,7 +26,7 @@ final class CandidatesTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 
-		( new WpdbStore() )->clear();
+		( new WpdbStore( new Urls( new Options() ) ) )->clear();
 
 		$this->candidates = new Candidates();
 
@@ -101,7 +103,7 @@ final class CandidatesTest extends WP_UnitTestCase {
 	}
 
 	public function test_missing_leaves_out_pages_that_have_a_copy(): void {
-		( new WpdbStore() )->save( new Entry( $this->published[1], "# Page\n", sha1( 'page' ), 'loopback', '1.0.0', gmdate( 'Y-m-d H:i:s' ), Entry::FRESH ) );
+		( new WpdbStore( new Urls( new Options() ) ) )->save( new Entry( $this->published[1], "# Page\n", sha1( 'page' ), 'loopback', '1.0.0', gmdate( 'Y-m-d H:i:s' ), Entry::FRESH ) );
 
 		$missing = $this->candidates->missing( array( 'page' ), 100 );
 

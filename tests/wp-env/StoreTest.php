@@ -11,6 +11,8 @@ namespace AgentWelcome\Tests\WpEnv;
 
 use AgentWelcome\Cache\Entry;
 use AgentWelcome\Cache\WpdbStore;
+use AgentWelcome\Http\Urls;
+use AgentWelcome\Settings\Options;
 use WP_UnitTestCase;
 
 final class StoreTest extends WP_UnitTestCase {
@@ -20,7 +22,7 @@ final class StoreTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 
-		$this->store = new WpdbStore();
+		$this->store = new WpdbStore( new Urls( new Options() ) );
 		$this->store->clear();
 	}
 
