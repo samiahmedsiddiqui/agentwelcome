@@ -32,6 +32,7 @@ $has_pass = '' !== (string) $options->get( 'http_auth_password', '' );
 		<p class="description"><?php esc_html_e( 'The page title, which is the default, is the title tag visitors and search engines see. The post title is used when a page has none.', 'agentwelcome' ); ?></p>
 	</div>
 	<div class="agentwelcome-field">
+		<input type="hidden" name="<?php echo esc_attr( $name ); ?>[title_strip_site]" value="0" />
 		<label>
 			<input type="checkbox" name="<?php echo esc_attr( $name ); ?>[title_strip_site]" value="1" <?php checked( (bool) $options->get( 'title_strip_site', true ) ); ?> />
 			<?php esc_html_e( 'Remove the site name from page titles', 'agentwelcome' ); ?>
