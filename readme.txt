@@ -197,6 +197,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 * New: more answers in the FAQ.
 * New: WooCommerce cart, checkout, My account and terms pages are left out of llms.txt and the Markdown pages.
 * Fix: a `.md` address that is not served now gets a plain text 404 from the plugin, so another plugin or a host rule can no longer redirect it to the homepage.
+* Fix: links that touch in the HTML, such as pagination numbers, now have a space between them in the Markdown.
 
 = 1.0.0 =
 * Initial release.
