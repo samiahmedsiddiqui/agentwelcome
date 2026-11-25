@@ -235,6 +235,10 @@ final class PageCache implements Hookable {
 		$page     = $this->generator->generate( $post );
 		$fallback = RenderResult::FALLBACK === $page->source;
 
+		if ( null !== $page->meta ) {
+			'' === $page->meta ? delete_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION ) : update_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION, $page->meta );
+		}
+
 		if ( ! $fallback && '' !== $page->title ) {
 			update_post_meta( $post->ID, PostMeta::TITLE, $page->title );
 		}

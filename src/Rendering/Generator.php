@@ -95,11 +95,13 @@ final class Generator {
 			$body = "# {$title}\n\n" . $body;
 		}
 
+		$meta  = RenderResult::LOOPBACK === $render->source ? MetaDescription::find( $render->html ) : null;
+		$found = $this->description->find( $post, $meta );
 		$front = $this->front_matter->render(
 			array(
 				'title'       => $title,
 				'url'         => $url,
-				'description' => $this->description->get( $post ),
+				'description' => $found['text'],
 				'type'        => $post->post_type,
 				'modified'    => (string) get_post_modified_time( 'c', true, $post ),
 				'language'    => str_replace( '_', '-', get_locale() ),
@@ -108,7 +110,7 @@ final class Generator {
 
 		$markdown = (string) apply_filters( 'agentwelcome_markdown', $front . "\n" . trim( $body ) . "\n", $post );
 
-		return new GeneratedPage( $markdown, $render->source, $render->notice, $title, $chosen['original'], $chosen['used'] );
+		return new GeneratedPage( $markdown, $render->source, $render->notice, $meta, $found['source'], $title, $chosen['original'], $chosen['used'] );
 	}
 
 	/**

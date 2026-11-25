@@ -20,7 +20,7 @@ AgentWelcome builds a Markdown version of each page from its rendered output, so
 * A `.md` version of every page, for example `/about.md`. The homepage is `/index.md`.
 * All public post types are served by default, with a setting to exclude any of them.
 * Hide individual pages from the editor, or exclude by ID, URL pattern or taxonomy term.
-* Per-page description for `llms.txt`. When empty it uses the SEO plugin's meta description, then the excerpt. The page content is never used.
+* Per-page description for `llms.txt`. When empty it uses the meta description of the page, then the excerpt. The page content is never used.
 * Verify & Preview: checks that the stored Markdown matches the page, shows a rendered preview and the changes, and updates it in one click. A scan checks every stored page in the background.
 * Works on sites protected with HTTP Basic authentication.
 * Generated Markdown is stored and refreshed when a page is saved.
@@ -198,6 +198,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 * New: Verify & Preview warns when robots.txt blocks AI crawlers such as GPTBot or ClaudeBot from llms.txt and the Markdown pages.
 * New: more answers in the FAQ.
 * New: WooCommerce cart, checkout, My account and terms pages are left out of llms.txt and the Markdown pages.
+* Change: the description in llms.txt and the Markdown uses the page's meta description, then the excerpt, instead of reading the SEO plugins' saved descriptions.
 * Fix: a `.md` address that is not served now gets a plain text 404 from the plugin, so another plugin or a host rule can no longer redirect it to the homepage.
 * Fix: links that touch in the HTML, such as pagination numbers, now have a space between them in the Markdown.
 

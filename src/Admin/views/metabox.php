@@ -37,5 +37,5 @@ $state  = $vars['status'];
 <p>
 	<label for="agentwelcome_description"><?php esc_html_e( 'Description for llms.txt', 'agentwelcome' ); ?></label>
 	<textarea id="agentwelcome_description" name="agentwelcome_description" class="widefat" rows="3" maxlength="300"><?php echo esc_textarea( $vars['description'] ); ?></textarea>
-	<span class="description"><?php esc_html_e( 'When empty, the SEO plugin\'s meta description is used, then the excerpt. The page content is never used.', 'agentwelcome' ); ?></span>
+	<span class="description"><?php esc_html_e( 'When empty, the meta description of the page is used, then the excerpt. The page content is never used.', 'agentwelcome' ); ?></span>
 </p>

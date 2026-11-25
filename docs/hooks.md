@@ -18,8 +18,7 @@ Filters and examples for changing what the plugin does from code.
 | `agentwelcome_max_concurrent_renders` | Pages that may be rendered at the same time for visitors (default 3). |
 | `agentwelcome_strip_selectors` | CSS selectors for elements to remove. |
 | `agentwelcome_markdown` | Final Markdown for a page. |
-| `agentwelcome_description` | The description used in the metadata and `llms.txt`. |
-| `agentwelcome_meta_description_keys` | Post meta keys read as the SEO meta description, in order. |
+| `agentwelcome_description` | The description used in the metadata and `llms.txt`, after the editor box, the page's meta description and the excerpt were tried in that order. |
 | `agentwelcome_check_site_address` | Return `false` to turn off the automatic pause when the site address changes. |
 | `agentwelcome_compare_ignore` | Regular expressions for text that Verify & Preview and the scan leave out when comparing. |
 | `agentwelcome_title_site_names` | Site names removed from page titles, as a list of strings. Defaults to the Site Title and the page's `og:site_name`. Receives the list and the `WP_Post`. |

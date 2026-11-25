@@ -5,6 +5,7 @@
  * @package AgentWelcome
  */
 
+use AgentWelcome\Content\Description;
 use AgentWelcome\Rendering\RenderResult;
 use AgentWelcome\Verify\Comparison;
 use AgentWelcome\Verify\VerifyResult;
@@ -13,18 +14,24 @@ defined( 'ABSPATH' ) || exit;
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Template-local variables.
 
-$result   = $vars['result'];
-$built    = $result->page;
-$coverage = $result->coverage;
-$entry    = $result->entry;
-$state    = $result->state;
-$verdicts = array(
+$result              = $vars['result'];
+$built               = $result->page;
+$coverage            = $result->coverage;
+$entry               = $result->entry;
+$state               = $result->state;
+$verdicts            = array(
 	VerifyResult::IN_SYNC    => __( 'In sync', 'agentwelcome' ),
 	VerifyResult::DIFFERS    => __( 'Out of date', 'agentwelcome' ),
 	VerifyResult::NOT_STORED => __( 'Not stored yet', 'agentwelcome' ),
 	VerifyResult::NOT_SERVED => __( 'Not served', 'agentwelcome' ),
 );
-$messages = array(
+$description_sources = array(
+	Description::EDITOR  => __( 'Editor box', 'agentwelcome' ),
+	Description::META    => __( 'Meta description of the page', 'agentwelcome' ),
+	Description::EXCERPT => __( 'Excerpt', 'agentwelcome' ),
+	Description::NONE    => __( 'None', 'agentwelcome' ),
+);
+$messages            = array(
 	VerifyResult::IN_SYNC    => __( 'The stored copy matches what the page produces now.', 'agentwelcome' ),
 	VerifyResult::DIFFERS    => sprintf(
 		/* translators: %s: number of lines. */
@@ -122,6 +129,7 @@ $messages = array(
 		<div class="agentwelcome-pane" data-agentwelcome-pane="raw">
 			<div class="agentwelcome-toolbar">
 				<span><strong><?php esc_html_e( 'Source:', 'agentwelcome' ); ?></strong> <?php echo esc_html( RenderResult::LOOPBACK === $built->source ? __( 'Rendered page (loopback request)', 'agentwelcome' ) : __( 'Post content (fallback)', 'agentwelcome' ) ); ?></span>
+				<span><strong><?php esc_html_e( 'Description:', 'agentwelcome' ); ?></strong> <?php echo esc_html( $description_sources[ $built->description_source ] ?? '' ); ?></span>
 				<button type="button" class="button" data-agentwelcome-copy="agentwelcome-markdown" data-copied="<?php esc_attr_e( 'Copied', 'agentwelcome' ); ?>"><?php esc_html_e( 'Copy Markdown', 'agentwelcome' ); ?></button>
 			</div>
 			<textarea id="agentwelcome-markdown" class="agentwelcome-markdown" rows="24" readonly><?php echo esc_textarea( $built->markdown ); ?></textarea>

@@ -16,6 +16,8 @@ The addresses it serves, how a page becomes Markdown, and which pages are left o
 
 ## Custom Permalinks
 
+The description in the metadata block and in `llms.txt` comes from the first of these that has text: the description typed in the AgentWelcome box on the edit screen, the `<meta name="description">` in the head of the rendered page (so whatever your SEO plugin or theme prints is used, template variables included), then the excerpt. The page content is never used. The meta description is read each time the page is generated and saved with the page as the post meta `_agentwelcome_page_description`. `llms.txt` and `llms-full.txt` are built from the database and use that saved value, and a page that has not been generated yet uses its excerpt until it is. Verify & Preview shows which of the three was used. Use the `agentwelcome_description` filter to change the result.
+
 Works with default WordPress permalinks and with the [Custom Permalinks](https://wordpress.org/plugins/custom-permalinks/) plugin. A page with a custom URL gets its Markdown at that URL plus `.md` (`/company/about-us.md`), `llms.txt` and the discovery tag use it, and `.md` requests for the original WordPress URL (`/about.md`) are redirected to it. URL patterns in the exclusion list match the custom path.
 
 ## How it works
