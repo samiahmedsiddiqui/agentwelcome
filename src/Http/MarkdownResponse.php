@@ -85,6 +85,27 @@ final class MarkdownResponse {
 	}
 
 	/**
+	 * Sends a plain text 404 for a Markdown address that is not served.
+	 *
+	 * @return void
+	 */
+	public function not_found(): void {
+		status_header( 404 );
+		$this->send_headers(
+			array(
+				'Content-Type'           => self::TEXT,
+				'X-Content-Type-Options' => 'nosniff',
+				'Cache-Control'          => 'no-store',
+				'X-Robots-Tag'           => 'noindex',
+			)
+		);
+
+		if ( 'HEAD' !== $this->method() ) {
+			echo esc_html__( 'Not found. There is no Markdown version of this address.', 'agentwelcome' ) . "\n";
+		}
+	}
+
+	/**
 	 * Sends the headers, with line breaks removed from the values.
 	 *
 	 * @param array<string, string> $headers Header values by name.
