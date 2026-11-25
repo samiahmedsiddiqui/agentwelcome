@@ -8,6 +8,7 @@ check("admin logged in", admin.login())
 site = anon()
 n = [0]
 T = "global $wpdb; "
+BK = "book/integ-nx-book"
 
 
 def bust():
@@ -55,8 +56,16 @@ def verify(slug):
     return admin.get("/wp-admin/admin.php?page=agentwelcome-verify&url=" + urllib.parse.quote(B + "/%s/" % slug, safe=""))[2]
 
 
+def enable_full():
+    page = admin.get("/wp-admin/admin.php?page=agentwelcome-llms")[2]
+    form = {"option_page": "agentwelcome_llms_group", "action": "update", "_wpnonce": nonce_from(page), "_wp_http_referer": "/wp-admin/admin.php?page=agentwelcome-llms",
+            "agentwelcome_llms[mode]": "automatic", "agentwelcome_llms[custom]": "", "agentwelcome_llms[full]": "1"}
+    return admin.req("/wp-admin/options.php", form, follow=False)
+
+
 try:
     set_env(no_cron=True)
+    check("llms-full.txt is turned on for the test", enable_full()[0] == 302 and site.get("/llms-full.txt" + bust())[0] == 200)
 
     print("--- a page that was never generated is not listed")
     new = create_page("Nx New", "<p>New page.</p>", post_name="integ-nx-new")
@@ -97,13 +106,13 @@ try:
     print("--- a whole post type")
     wpcli("option", "update", "kit_robots_type", "book")
     book = int(wpcli("post", "create", "--post_type=book", "--post_title=Nx Book", "--post_name=integ-nx-book", "--post_status=publish", "--post_content=<p>Book.</p>", "--porcelain").strip().splitlines()[-1])
-    md("integ-nx-book")
+    md(BK)
     gen(book)
-    check("a post type that says noindex is left out without any per-page setting", left_out("integ-nx-book"), md("integ-nx-book")[0])
+    check("a post type that says noindex is left out without any per-page setting", left_out(BK), md(BK)[0])
     check("a page of another type is not affected", served("integ-nx-a"))
     wpcli("option", "delete", "kit_robots_type")
     gen(book)
-    check("and returns when the post type is indexable again", served("integ-nx-book"))
+    check("and returns when the post type is indexable again", served(BK))
 
     print("--- the setting")
     wpcli("post", "meta", "update", str(a), "kit_robots", "noindex")
@@ -115,7 +124,7 @@ try:
     check("with it on again, the page leaves at once", left_out("integ-nx-a"))
 
     print("--- results that are unknown")
-    php(T + "$wpdb->query( \"UPDATE {$wpdb->prefix}agentwelcome_pages SET noindex = NULL WHERE post_id = %d\" );" % a)
+    php(T + "$wpdb->query( \"UPDATE {$wpdb->prefix}agentwelcome_pages SET noindex = NULL WHERE post_id = %d\" ); AgentWelcome\\Index\\OutputCache::purge();" % a)
     check("a copy from before the upgrade has no result and is served", served("integ-nx-a"), flag(a))
     wpcli("post", "meta", "delete", str(a), "kit_robots")
     set_env(no_cron=True, no_loopback=True)
@@ -133,7 +142,7 @@ try:
     check("the background job was started", php("echo get_option('agentwelcome_batch') === false ? 'no' : 'yes';") == "yes")
     check("and the request for it is cleared", php("echo get_option('agentwelcome_warmup') === false ? 'gone' : 'left';") == "gone")
     check("stored copies are marked out of date", row(a)["state"] == "stale", row(a))
-    php("do_action('agentwelcome_regenerate_batch');")
+    php("for ( $i = 0; $i < 60 && false !== get_option( 'agentwelcome_batch' ); $i++ ) { do_action( 'agentwelcome_regenerate_batch' ); }")
     check("running the job refreshes them", row(a)["state"] == "fresh", row(a))
 
     print("--- the site asks search engines not to index it")
