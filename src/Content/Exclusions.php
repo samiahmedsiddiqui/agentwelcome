@@ -122,4 +122,13 @@ final class Exclusions {
 	public function leaves_out_noindex(): bool {
 		return (bool) $this->options->get( 'exclude_noindex', true );
 	}
+
+	/**
+	 * Whether pages that visitors cannot read are left out.
+	 *
+	 * @return bool True when the setting is on.
+	 */
+	public function leaves_out_restricted(): bool {
+		return (bool) $this->options->get( 'exclude_restricted', true );
+	}
 }

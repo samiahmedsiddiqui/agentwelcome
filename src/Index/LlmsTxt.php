@@ -149,10 +149,11 @@ final class LlmsTxt {
 
 		$entries = array();
 		$flags   = $this->store->noindex_flags( wp_list_pluck( $posts, 'ID' ) );
+		$reasons = $this->store->restricted_reasons( wp_list_pluck( $posts, 'ID' ) );
 
 		foreach ( $posts as $post ) {
 			// A page that has not been generated yet is not listed, because it is not known whether it says noindex.
-			if ( ! array_key_exists( $post->ID, $flags ) || $this->eligibility->hides_result( $flags[ $post->ID ] ) ) {
+			if ( ! array_key_exists( $post->ID, $flags ) || $this->eligibility->hides_result( $flags[ $post->ID ] ) || $this->eligibility->hides_restricted( $reasons[ $post->ID ] ?? null ) ) {
 				continue;
 			}
 

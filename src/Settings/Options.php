@@ -31,6 +31,7 @@ final class Options {
 			'excluded_posts'       => '',
 			'excluded_terms'       => array(),
 			'exclude_noindex'      => true,
+			'exclude_restricted'   => true,
 			'content_selector'     => '',
 			'strip_selectors'      => '',
 			'heading_selectors'    => '',

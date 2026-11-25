@@ -68,6 +68,7 @@ final class Sanitizer {
 				'excluded_posts'       => isset( $input['excluded_posts'] ) ? sanitize_textarea_field( $input['excluded_posts'] ) : '',
 				'excluded_terms'       => $terms,
 				'exclude_noindex'      => ! empty( $input['exclude_noindex'] ),
+				'exclude_restricted'   => ! empty( $input['exclude_restricted'] ),
 				'content_selector'     => implode( ', ', $content['valid'] ),
 				'strip_selectors'      => implode( "\n", $strip['valid'] ),
 				'heading_selectors'    => $rules->to_text( $headings['valid'] ),

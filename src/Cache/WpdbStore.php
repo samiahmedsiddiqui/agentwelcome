@@ -35,7 +35,7 @@ final class WpdbStore implements Store {
 		global $wpdb;
 
 		$table   = Schema::table();
-		$columns = $with_markdown ? '*' : "post_id, '' AS markdown, content_hash, source, generator_version, generated_at, state, noindex";
+		$columns = $with_markdown ? '*' : "post_id, '' AS markdown, content_hash, source, generator_version, generated_at, state, noindex, restricted";
 		$row     = $wpdb->get_row( $wpdb->prepare( "SELECT {$columns} FROM {$table} WHERE post_id = %d", $post_id ), ARRAY_A );
 
 		if ( ! is_array( $row ) ) {
@@ -50,7 +50,8 @@ final class WpdbStore implements Store {
 			(string) $row['generator_version'],
 			(string) $row['generated_at'],
 			(string) $row['state'],
-			null === $row['noindex'] ? null : (bool) (int) $row['noindex']
+			null === $row['noindex'] ? null : (bool) (int) $row['noindex'],
+			null === $row['restricted'] ? null : (string) $row['restricted']
 		);
 	}
 
@@ -75,8 +76,9 @@ final class WpdbStore implements Store {
 				'generated_at'      => $entry->generated_at,
 				'state'             => $entry->state,
 				'noindex'           => null === $entry->noindex ? null : (int) $entry->noindex,
+				'restricted'        => $entry->restricted,
 			),
-			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d' )
+			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
 		);
 
 		OutputCache::purge();
@@ -190,6 +192,31 @@ final class WpdbStore implements Store {
 		}
 
 		return $flags;
+	}
+
+	/**
+	 * @param int[] $post_ids Page IDs.
+	 * @return array<int, string|null> Reason by page ID, for the pages that have a stored copy.
+	 */
+	public function restricted_reasons( array $post_ids ): array {
+		global $wpdb;
+
+		$ids = array_values( array_filter( array_map( 'absint', $post_ids ) ) );
+
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$table   = Schema::table();
+		$marks   = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows    = (array) $wpdb->get_results( $wpdb->prepare( "SELECT post_id, restricted FROM {$table} WHERE post_id IN ({$marks})", $ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Placeholders are built from the count of IDs.
+		$reasons = array();
+
+		foreach ( $rows as $row ) {
+			$reasons[ (int) $row['post_id'] ] = null === $row['restricted'] ? null : (string) $row['restricted'];
+		}
+
+		return $reasons;
 	}
 
 	/**

@@ -40,13 +40,13 @@ final class Eligibility {
 	}
 
 	/**
-	 * Whether a stored copy is left out because its page said noindex.
+	 * Whether a stored copy is left out because its page said noindex or visitors cannot read it.
 	 *
 	 * @param Entry|null $entry The stored copy.
 	 * @return bool True when it is left out.
 	 */
 	public function hides( ?Entry $entry ): bool {
-		return null !== $entry && $this->hides_result( $entry->noindex );
+		return null !== $entry && ( $this->hides_result( $entry->noindex ) || $this->hides_restricted( $entry->restricted ) );
 	}
 
 	/**
@@ -57,6 +57,37 @@ final class Eligibility {
 	 */
 	public function hides_result( ?bool $noindex ): bool {
 		return true === $noindex && $this->exclusions->leaves_out_noindex();
+	}
+
+	/**
+	 * Whether a restricted result is left out.
+	 *
+	 * @param string|null $restricted Reason from the page, an empty string when visitors can read it, or null when unknown.
+	 * @return bool True when visitors cannot read the page and such pages are left out.
+	 */
+	public function hides_restricted( ?string $restricted ): bool {
+		return null !== $restricted && '' !== $restricted && $this->exclusions->leaves_out_restricted();
+	}
+
+	/**
+	 * Explains in a sentence why visitors cannot read a page.
+	 *
+	 * @param string $reason Reason from Restriction.
+	 * @return string Sentence for people.
+	 */
+	public function describe_restricted( string $reason ): string {
+		if ( 0 === strpos( $reason, 'redirect:' ) ) {
+			/* translators: %s: path visitors are sent to, such as /login/. */
+			$why = sprintf( __( 'visitors are redirected to %s', 'agentwelcome' ), substr( $reason, 9 ) );
+		} elseif ( 0 === strpos( $reason, 'http_' ) ) {
+			/* translators: %s: HTTP status code. */
+			$why = sprintf( __( 'visitors get HTTP %s', 'agentwelcome' ), substr( $reason, 5 ) );
+		} else {
+			$why = $reason;
+		}
+
+		/* translators: %s: why visitors cannot read the page. */
+		return sprintf( __( 'The page is left out because visitors cannot read it (%s). Untick "Leave out pages that visitors cannot read" in the settings to include it.', 'agentwelcome' ), $why );
 	}
 
 	/**

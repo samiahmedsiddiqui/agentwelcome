@@ -18,17 +18,21 @@ final class RenderResult {
 	public const LOOPBACK = 'loopback';
 	/** The HTML was built from the post content because the rendered page could not be read. */
 	public const FALLBACK = 'fallback';
+	/** Visitors cannot read the page, so there is no HTML. */
+	public const RESTRICTED = 'restricted';
 
 	/**
 	 * @param string $html   HTML of the page.
-	 * @param string $source Either LOOPBACK or FALLBACK.
+	 * @param string $source LOOPBACK, FALLBACK or RESTRICTED.
 	 * @param string $notice A sentence for the admin when the fallback was used.
 	 * @param string $robots Values of the X-Robots-Tag response header, one per line.
+	 * @param string $restricted Why visitors cannot read the page, as a Restriction reason, or an empty string.
 	 */
 	public function __construct(
 		public string $html,
 		public string $source,
 		public string $notice = '',
-		public string $robots = ''
+		public string $robots = '',
+		public string $restricted = ''
 	) {}
 }

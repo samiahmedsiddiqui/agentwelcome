@@ -77,6 +77,14 @@ interface Store {
 	public function noindex_flags( array $post_ids ): array;
 
 	/**
+	 * Why visitors could not read stored pages when they were generated.
+	 *
+	 * @param int[] $post_ids Page IDs.
+	 * @return array<int, string|null> Reason by page ID, for the pages that have a stored copy. An empty string means readable, null means unknown.
+	 */
+	public function restricted_reasons( array $post_ids ): array;
+
+	/**
 	 * Lists the pages that have a stored copy.
 	 *
 	 * @param int $after Only IDs above this one.

@@ -20,14 +20,15 @@ final class Entry {
 	public const STALE = 'stale';
 
 	/**
-	 * @param int       $post_id           ID of the page the copy belongs to.
-	 * @param string    $markdown          Markdown including the front matter block.
-	 * @param string    $content_hash      Hash of the page content the copy was built from.
-	 * @param string    $source            Where the content came from: the rendered page or the post content.
-	 * @param string    $generator_version Plugin version that generated the copy.
-	 * @param string    $generated_at      GMT time of generation, in MySQL format.
-	 * @param string    $state             Either FRESH or STALE.
-	 * @param bool|null $noindex        Whether the page said noindex when it was generated, or null when unknown.
+	 * @param int         $post_id           ID of the page the copy belongs to.
+	 * @param string      $markdown          Markdown including the front matter block.
+	 * @param string      $content_hash      Hash of the page content the copy was built from.
+	 * @param string      $source            Where the content came from: the rendered page or the post content.
+	 * @param string      $generator_version Plugin version that generated the copy.
+	 * @param string      $generated_at      GMT time of generation, in MySQL format.
+	 * @param string      $state             Either FRESH or STALE.
+	 * @param bool|null   $noindex        Whether the page said noindex when it was generated, or null when unknown.
+	 * @param string|null $restricted   Why visitors could not read the page when it was generated, an empty string when they could, or null when unknown.
 	 */
 	public function __construct(
 		public int $post_id,
@@ -37,7 +38,8 @@ final class Entry {
 		public string $generator_version,
 		public string $generated_at,
 		public string $state,
-		public ?bool $noindex = null
+		public ?bool $noindex = null,
+		public ?string $restricted = null
 	) {}
 
 	/**

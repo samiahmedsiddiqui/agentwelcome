@@ -235,6 +235,13 @@ final class PageCache implements Hookable {
 		$page     = $this->generator->generate( $post );
 		$fallback = RenderResult::FALLBACK === $page->source;
 
+		if ( RenderResult::RESTRICTED === $page->source ) {
+			delete_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION );
+			delete_post_meta( $post->ID, PostMeta::TITLE );
+
+			return new Entry( $post->ID, '', sha1( '' ), $page->source, AGENTWELCOME_VERSION, gmdate( 'Y-m-d H:i:s' ), Entry::FRESH, null, $page->restricted );
+		}
+
 		if ( null !== $page->meta ) {
 			'' === $page->meta ? delete_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION ) : update_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION, $page->meta );
 		}
@@ -251,7 +258,8 @@ final class PageCache implements Hookable {
 			AGENTWELCOME_VERSION,
 			gmdate( 'Y-m-d H:i:s' ),
 			$fallback ? Entry::STALE : Entry::FRESH,
-			$page->noindex
+			$page->noindex,
+			$page->restricted
 		);
 	}
 }
