@@ -94,7 +94,7 @@ final class Generator {
 		$extractor = ! empty( $overrides['strip'] ) || ! empty( $overrides['headings'] ) ? $this->extractor->with_extra( $overrides['strip'] ?? array(), $overrides['headings'] ?? array() ) : $this->extractor;
 		$node      = $extractor->extract( $render->html, $selector, $url );
 		$body      = null === $node ? '' : $this->converter->convert( $node );
-		$chosen    = $this->title( $post, $render );
+		$chosen    = $this->title( $post, $render, $paged );
 		$title     = $chosen['title'];
 
 		if ( '' !== $title && ( null === $node || 0 === $node->getElementsByTagName( 'h1' )->length ) ) {
@@ -142,9 +142,10 @@ final class Generator {
 	 *
 	 * @param WP_Post      $post   The page.
 	 * @param RenderResult $render The rendered page.
+	 * @param int          $paged  Number of the paginated view, 1 for the page itself.
 	 * @return array{title: string, original: string, used: string} The title, the title tag as found, and which one was used.
 	 */
-	private function title( WP_Post $post, RenderResult $render ): array {
+	private function title( WP_Post $post, RenderResult $render, int $paged ): array {
 		$post_title = trim( html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES, 'UTF-8' ) );
 
 		if ( RenderResult::LOOPBACK !== $render->source ) {
@@ -156,6 +157,6 @@ final class Generator {
 		$names = array_map( 'strval', (array) apply_filters( 'agentwelcome_title_site_names', $names, $post ) );
 		$home  = 'page' === get_option( 'show_on_front' ) && (int) get_option( 'page_on_front' ) === $post->ID;
 
-		return PageTitle::choose( $post_title, $read['title'], $names, (bool) $this->options->get( 'title_strip_site', true ), 'post' !== $this->options->get( 'title_source', 'page' ), $home );
+		return PageTitle::choose( $post_title, $read['title'], $names, (bool) $this->options->get( 'title_strip_site', true ), 'post' !== $this->options->get( 'title_source', 'page' ), $home, $paged );
 	}
 }
