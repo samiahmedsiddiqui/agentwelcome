@@ -132,7 +132,9 @@ final class Generator {
 		// A page built without its rendered HTML has no robots information, so its result is unknown.
 		$known = RenderResult::LOOPBACK === $render->source || $noindex;
 
-		return new GeneratedPage( $markdown, $render->source, $render->notice, $meta, $found['source'], $known ? $noindex : null, $source, $title, $chosen['original'], $chosen['used'], RenderResult::LOOPBACK === $render->source ? '' : null );
+		$views = RenderResult::LOOPBACK === $render->source ? Pagination::count( $render->html, (string) $this->urls->view_url( $post, 1 ) ) : null;
+
+		return new GeneratedPage( $markdown, $render->source, $render->notice, $meta, $found['source'], $known ? $noindex : null, $source, $title, $chosen['original'], $chosen['used'], RenderResult::LOOPBACK === $render->source ? '' : null, $views );
 	}
 
 	/**

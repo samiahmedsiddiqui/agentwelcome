@@ -64,7 +64,7 @@ Add `.md` to the page URL without the trailing slash: `/about/` becomes `/about.
 
 = Are paginated pages such as /blog/page/2/ available as Markdown? =
 
-Yes, for the blog page: `/blog/page/2.md` returns the Markdown of `/blog/page/2/`. A number beyond the last page gets a 404. llms.txt lists the blog page once, not each of its pages. For another list page, such as a shop page, return its number of pages from the `agentwelcome_page_count` filter.
+Yes: `/blog/page/2.md` returns the Markdown of `/blog/page/2/`, for the blog page and for any page that links to its own `/page/2/`. A number beyond the last page gets a 404. llms.txt lists the list page once, not each of its pages. When a list loads its pages another way, return the number of pages from the `agentwelcome_page_count` filter.
 
 = Why do I get a 404 for a page? =
 
@@ -200,7 +200,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 == Changelog ==
 
 = 1.1.0 =
-* New: the pages of the blog page, such as `/blog/page/2/`, are available as Markdown at `/blog/page/2.md`, each stored and refreshed on its own.
+* New: the pages of the blog page and other list pages, such as `/blog/page/2/`, are available as Markdown at `/blog/page/2.md`, each stored and refreshed on its own.
 * New: pages that visitors cannot read, because a membership or access-control plugin answers with HTTP 401 or 403 or redirects to a login page, are left out of llms.txt, llms-full.txt and the Markdown pages. A setting and the `agentwelcome_is_restricted` filter include them.
 * Change: noindex is read from the page's robots meta tag and X-Robots-Tag header instead of from SEO plugin settings, so a whole post type or a theme setting is respected. llms.txt lists only pages that have been generated, and every page is generated in the background after an update.
 * Change: the title in the Markdown, llms.txt and llms-full.txt is now the page's own title without the site name. A setting switches back to the WordPress post title.

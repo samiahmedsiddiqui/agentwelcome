@@ -43,9 +43,9 @@ Untick **Leave out pages set to noindex** under AgentWelcome > Settings > Conten
 
 ## Paginated list pages
 
-A page that lists posts, such as the page set as the blog page, has more views at `/blog/page/2/`. Each is served as Markdown at `/blog/page/2.md`, built from the rendered `/blog/page/2/`, and stored with its own copy, so it is refreshed, left out when noindex or restricted, and checked in Verify & Preview like any page. Changing the list page marks all its views out of date; they are rebuilt the next time they are requested. A number beyond the last view, or `page/1.md`, gets the plain text 404 described below, not a redirect. If a view cannot be rendered, it also gets a 404 until a later attempt works, because the post content is no substitute for it.
+A page that lists posts, such as the page set as the blog page or a page with its own list template, has more views at `/blog/page/2/`. Each is served as Markdown at `/blog/page/2.md`, built from the rendered `/blog/page/2/`, and stored with its own copy, so it is refreshed, left out when noindex or restricted, and checked in Verify & Preview like any page. Changing the list page marks all its views out of date; they are rebuilt the next time they are requested. A number beyond the last view, or `page/1.md`, gets the plain text 404 described below, not a redirect. If a view cannot be rendered, it also gets a 404 until a later attempt works, because the post content is no substitute for it.
 
-`llms.txt` and `llms-full.txt` list the list page once, not its views. By default only the blog page is paginated. For another list page, such as a shop page, return its number of views from the `agentwelcome_page_count` filter.
+`llms.txt` and `llms-full.txt` list the list page once, not its views. The number of views of the blog page comes from the number of posts. For any other page it is read from the links of the rendered page to its own `/page/N/` addresses, taking the highest number. A list that only links to the next view is followed one view at a time. Links marked `ugc`, such as those in comments, are not read. When a list loads its views another way, return the number from the `agentwelcome_page_count` filter.
 
 ## Pages that visitors cannot read
 

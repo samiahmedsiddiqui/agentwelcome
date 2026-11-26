@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Http;
 
+use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Settings\Options;
 use WP_Post;
 
@@ -181,6 +182,8 @@ final class Urls {
 		if ( (int) get_option( 'page_for_posts' ) === $post->ID ) {
 			$count = max( 1, (int) ceil( (int) wp_count_posts( 'post' )->publish / max( 1, (int) get_option( 'posts_per_page' ) ) ) );
 		}
+
+		$count = max( $count, (int) get_post_meta( $post->ID, PostMeta::VIEWS, true ) );
 
 		/**
 		 * Filters the number of paginated views of a page, which are served as page/2.md and so on.

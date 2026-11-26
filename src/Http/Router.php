@@ -189,9 +189,22 @@ final class Router implements Hookable {
 
 			// A view that does not exist is not redirected to the page.
 			if ( null !== $view && null !== $post ) {
-				if ( $view['paged'] > $this->urls->view_count( $post ) || ! $this->eligibility->is_eligible( $post ) ) {
+				if ( ! $this->eligibility->is_eligible( $post ) ) {
 					$this->not_found( $route, $request );
 					return;
+				}
+
+				// The number of views is read from the page itself, which may not be generated yet.
+				if ( $view['paged'] > $this->urls->view_count( $post ) ) {
+					if ( null === $this->pages->fetch( $post ) ) {
+						$this->response->unavailable();
+						$this->terminate();
+					}
+
+					if ( $view['paged'] > $this->urls->view_count( $post ) ) {
+						$this->not_found( $route, $request );
+						return;
+					}
 				}
 
 				$paged = $view['paged'];

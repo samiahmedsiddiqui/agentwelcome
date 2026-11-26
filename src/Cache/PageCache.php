@@ -14,6 +14,7 @@ use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Contracts\Hookable;
 use AgentWelcome\Environment\Environment;
 use AgentWelcome\Http\Urls;
+use AgentWelcome\Rendering\GeneratedPage;
 use AgentWelcome\Rendering\Generator;
 use AgentWelcome\Rendering\RenderResult;
 use WP_Post;
@@ -246,6 +247,8 @@ final class PageCache implements Hookable {
 		$page     = $this->generator->generate( $post, array(), $paged );
 		$fallback = RenderResult::FALLBACK === $page->source;
 
+		$this->remember_views( $post->ID, $page, $paged );
+
 		// The post content is not a substitute for a paginated view, so the copy stays empty and is retried later.
 		if ( $paged > 1 && $fallback ) {
 			return new Entry( $post->ID, '', sha1( '' ), RenderResult::FALLBACK, AGENTWELCOME_VERSION, gmdate( 'Y-m-d H:i:s' ), Entry::STALE, null, null, $paged );
@@ -281,5 +284,21 @@ final class PageCache implements Hookable {
 			$page->restricted,
 			$paged
 		);
+	}
+
+	/**
+	 * Keeps the number of views that the page links to. A later view can only raise it, for lists that link to the next view alone.
+	 *
+	 * @param int           $post_id Page ID.
+	 * @param GeneratedPage $page    The generated view.
+	 * @param int           $paged   Number of the paginated view, 1 for the page itself.
+	 * @return void
+	 */
+	private function remember_views( int $post_id, GeneratedPage $page, int $paged ): void {
+		if ( 1 === $paged && ( RenderResult::RESTRICTED === $page->source || 1 === $page->views ) ) {
+			delete_post_meta( $post_id, PostMeta::VIEWS );
+		} elseif ( $page->views > max( 1, (int) get_post_meta( $post_id, PostMeta::VIEWS, true ) ) ) {
+			update_post_meta( $post_id, PostMeta::VIEWS, $page->views );
+		}
 	}
 }

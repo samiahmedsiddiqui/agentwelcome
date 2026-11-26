@@ -101,6 +101,7 @@ final class WpdbStore implements Store {
 		$removed = $wpdb->delete( Schema::table(), array( 'post_id' => $post_id ), array( '%d' ) );
 		delete_post_meta( $post_id, PostMeta::PAGE_DESCRIPTION );
 		delete_post_meta( $post_id, PostMeta::TITLE );
+		delete_post_meta( $post_id, PostMeta::VIEWS );
 		OutputCache::purge();
 
 		if ( $removed ) {
@@ -141,6 +142,7 @@ final class WpdbStore implements Store {
 
 		$wpdb->query( "DELETE FROM {$table}" );
 		delete_post_meta_by_key( PostMeta::TITLE );
+		delete_post_meta_by_key( PostMeta::VIEWS );
 		OutputCache::purge();
 
 		/**
