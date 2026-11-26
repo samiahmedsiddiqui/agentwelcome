@@ -78,7 +78,7 @@ final class Schema implements Hookable {
 
 		// A copy was kept per page only. The page number joins the key so each paginated view of a list page has its own copy.
 		if ( false !== $installed && null === $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'paged' ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table.
-			$wpdb->query( "ALTER TABLE {$table} ADD paged int(10) unsigned NOT NULL default 1 AFTER post_id, DROP PRIMARY KEY, ADD PRIMARY KEY (post_id,paged)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.SchemaChange -- Plugin-owned table.
+			$wpdb->query( "ALTER TABLE {$table} ADD paged int(10) unsigned NOT NULL default 1 AFTER post_id, DROP PRIMARY KEY, ADD PRIMARY KEY (post_id,paged)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table.
 		}
 
 		dbDelta(
