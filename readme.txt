@@ -211,6 +211,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 * New: WooCommerce cart, checkout, My account and terms pages are left out of llms.txt and the Markdown pages.
 * Change: the description in llms.txt and the Markdown uses the page's meta description, then the excerpt, instead of reading the SEO plugins' saved descriptions.
 * Fix: a `.md` address that is not served now gets a plain text 404 from the plugin, so another plugin or a host rule can no longer redirect it to the homepage.
+* Fix: links that the page builds from its own address, such as pagination links, no longer carry the `agentwelcome_render` argument into the Markdown.
 * Fix: links that touch in the HTML, such as pagination numbers, now have a space between them in the Markdown.
 
 = 1.0.0 =

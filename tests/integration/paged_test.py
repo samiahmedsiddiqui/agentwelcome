@@ -97,6 +97,7 @@ try:
     total = int(php("echo (int) ceil( wp_count_posts()->publish / 2 );"))
     code, h, body, _ = md("integ-pg-list/page/2")
     check("page/2.md is served before the page itself was ever requested", code == 200 and all(t in body for t in titles(2)), (code, body[:300]))
+    check("its links do not carry the argument of the render request", "agentwelcome_render" not in body, body[-400:])
     check("the number of views comes from its links", wpcli("post", "meta", "get", str(custom), "_agentwelcome_page_views").strip() == str(total), total)
     check("the last view is served", md("integ-pg-list/page/%d" % total)[0] == 200)
     check("a view beyond it is not", md("integ-pg-list/page/%d" % (total + 1))[0] == 404 and paged_row(custom, total + 1) is None)

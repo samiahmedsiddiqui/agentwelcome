@@ -116,10 +116,24 @@ final class Renderer {
 
 			$robots = wp_remote_retrieve_header( $response, 'x-robots-tag' );
 
-			return new RenderResult( $body, RenderResult::LOOPBACK, '', implode( "\n", (array) $robots ) );
+			return new RenderResult( self::without_marker( $body ), RenderResult::LOOPBACK, '', implode( "\n", (array) $robots ) );
 		}
 
 		return 'too_many_redirects';
+	}
+
+	/**
+	 * Removes the argument of the render request from the links that copied it, such as pagination links.
+	 *
+	 * @param string $html HTML of the page.
+	 * @return string The HTML without the argument.
+	 */
+	public static function without_marker( string $html ): string {
+		return (string) preg_replace(
+			array( '/\?agentwelcome_render=\d+&(?:#0?38;|amp;)?/', '/(?:\?|&(?:#0?38;|amp;)?)agentwelcome_render=\d+/' ),
+			array( '?', '' ),
+			$html
+		);
 	}
 
 	/**
