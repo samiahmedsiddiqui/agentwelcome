@@ -143,7 +143,7 @@ try:
     print("--- the upgrade from database version 2")
     php("delete_option('agentwelcome_batch'); wp_unschedule_hook('agentwelcome_regenerate_batch'); global $wpdb; $wpdb->query( \"ALTER TABLE {$wpdb->prefix}agentwelcome_pages DROP COLUMN restricted\" ); update_option('agentwelcome_db_version', '2');")
     site.get("/")
-    check("the database version is updated", wpcli("option", "get", "agentwelcome_db_version").strip() == "3")
+    check("the database version is updated", wpcli("option", "get", "agentwelcome_db_version").strip() == "4")
     check("the column exists again, unknown for the old copies", row(ok) is not None and "restricted" in row(ok) and row(ok)["restricted"] is None, row(ok))
     check("the copies are marked out of date and the background job started", row(ok)["state"] == "stale" and php("echo get_option('agentwelcome_batch') === false ? 'no' : 'yes';") == "yes")
     check("an unknown result is served", md("integ-rs-open")[0] == 200)

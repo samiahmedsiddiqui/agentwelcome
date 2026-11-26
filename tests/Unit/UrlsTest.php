@@ -114,4 +114,40 @@ final class UrlsTest extends TestCase {
 			'empty'                     => array( '', false, 'index.md' ),
 		);
 	}
+
+	/**
+	 * @dataProvider views
+	 */
+	public function test_splits_the_view_number( string $path, ?array $expected ): void {
+		$this->assertSame( $expected, Urls::split_view( $path ) );
+	}
+
+	/**
+	 * @return array<string, array{string, array{path: string, paged: int}|null}>
+	 */
+	public function views(): array {
+		return array(
+			'the second view'        => array(
+				'blog/page/2',
+				array(
+					'path'  => 'blog',
+					'paged' => 2,
+				),
+			),
+			'a nested page'          => array(
+				'news/blog/page/12/',
+				array(
+					'path'  => 'news/blog',
+					'paged' => 12,
+				),
+			),
+			'the first view'         => array( 'blog/page/1', null ),
+			'zero'                   => array( 'blog/page/0', null ),
+			'leading zero'           => array( 'blog/page/02', null ),
+			'not a number'           => array( 'blog/page/two', null ),
+			'no list page'           => array( 'page/2', null ),
+			'a page that ends in 2'  => array( 'blog/page2', null ),
+			'a huge number'          => array( 'blog/page/99999999', null ),
+		);
+	}
 }

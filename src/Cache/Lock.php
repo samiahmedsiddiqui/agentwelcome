@@ -23,10 +23,11 @@ final class Lock {
 	 * Takes the generation lock of a page.
 	 *
 	 * @param int $post_id Page ID.
+	 * @param int $paged   Number of the paginated view, 1 for the page itself.
 	 * @return bool True when the lock was taken, false when another request holds it.
 	 */
-	public function acquire( int $post_id ): bool {
-		return $this->take( $this->name( $post_id ) );
+	public function acquire( int $post_id, int $paged = 1 ): bool {
+		return $this->take( $this->name( $post_id, $paged ) );
 	}
 
 	/**
@@ -95,12 +96,13 @@ final class Lock {
 	 * Releases the generation lock of a page.
 	 *
 	 * @param int $post_id Page ID.
+	 * @param int $paged   Number of the paginated view, 1 for the page itself.
 	 * @return void
 	 */
-	public function release( int $post_id ): void {
+	public function release( int $post_id, int $paged = 1 ): void {
 		global $wpdb;
 
-		$wpdb->delete( $wpdb->options, array( 'option_name' => $this->name( $post_id ) ) );
+		$wpdb->delete( $wpdb->options, array( 'option_name' => $this->name( $post_id, $paged ) ) );
 	}
 
 	/**
@@ -119,9 +121,10 @@ final class Lock {
 	 * Option name of the generation lock of a page.
 	 *
 	 * @param int $post_id Page ID.
+	 * @param int $paged   Number of the paginated view, 1 for the page itself.
 	 * @return string Option name.
 	 */
-	private function name( int $post_id ): string {
-		return 'agentwelcome_lock_' . $post_id;
+	private function name( int $post_id, int $paged = 1 ): string {
+		return 'agentwelcome_lock_' . $post_id . ( $paged > 1 ? '_' . $paged : '' );
 	}
 }

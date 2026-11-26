@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Http;
 
+use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Settings\Options;
 use WP_Post;
 
@@ -157,16 +158,75 @@ final class Urls {
 	}
 
 	/**
-	 * Address of the Markdown version of a page.
+	 * Address of a paginated view of a page, such as /blog/page/2/.
 	 *
-	 * @param WP_Post $post The page.
+	 * @param WP_Post $post  The page.
+	 * @param int     $paged Number of the view, 1 for the page itself.
 	 * @return string|null The address, or null when the page has no pretty address.
 	 */
-	public function markdown_url( WP_Post $post ): ?string {
+	public function view_url( WP_Post $post, int $paged = 1 ): ?string {
+		$url = $this->permalink( $post );
+
+		return null === $url || $paged < 2 ? $url : trailingslashit( $url ) . 'page/' . $paged . '/';
+	}
+
+	/**
+	 * Number of paginated views of a page. Only the page that shows the blog posts has more than one, unless a filter says otherwise.
+	 *
+	 * @param WP_Post $post The page.
+	 * @return int Number of views, at least 1.
+	 */
+	public function view_count( WP_Post $post ): int {
+		$count = 1;
+
+		if ( (int) get_option( 'page_for_posts' ) === $post->ID ) {
+			$count = max( 1, (int) ceil( (int) wp_count_posts( 'post' )->publish / max( 1, (int) get_option( 'posts_per_page' ) ) ) );
+		}
+
+		$count = max( $count, (int) get_post_meta( $post->ID, PostMeta::VIEWS, true ) );
+
+		/**
+		 * Filters the number of paginated views of a page, which are served as page/2.md and so on.
+		 *
+		 * @param int     $count Number of views, 1 when the page is not paginated.
+		 * @param WP_Post $post  The page.
+		 */
+		return max( 1, (int) apply_filters( 'agentwelcome_page_count', $count, $post ) );
+	}
+
+	/**
+	 * Splits a path that ends in /page/N into the path of the list page and the view number.
+	 *
+	 * @param string $path Page path without the .md ending.
+	 * @return array{path: string, paged: int}|null The parts, or null when the path has no view number of 2 or more.
+	 */
+	public static function split_view( string $path ): ?array {
+		if ( 1 !== preg_match( '#^(.+)/page/([1-9][0-9]{0,5})$#', trim( $path, '/' ), $found ) || (int) $found[2] < 2 ) {
+			return null;
+		}
+
+		return array(
+			'path'  => $found[1],
+			'paged' => (int) $found[2],
+		);
+	}
+
+	/**
+	 * Address of the Markdown version of a page.
+	 *
+	 * @param WP_Post $post  The page.
+	 * @param int     $paged Number of the paginated view, 1 for the page itself.
+	 * @return string|null The address, or null when the page has no pretty address.
+	 */
+	public function markdown_url( WP_Post $post, int $paged = 1 ): ?string {
 		$url = $this->permalink( $post );
 
 		if ( null === $url ) {
 			return null;
+		}
+
+		if ( $paged > 1 ) {
+			return untrailingslashit( $url ) . '/page/' . $paged . '.md';
 		}
 
 		$front_page = $this->front_page();
@@ -207,6 +267,18 @@ final class Urls {
 	 * @return WP_Post|null The page, or null when none matches or it is on another site.
 	 */
 	public function resolve_url( string $url ): ?WP_Post {
+		$view = $this->resolve_view( $url );
+
+		return null !== $view && 1 === $view['paged'] ? $view['post'] : null;
+	}
+
+	/**
+	 * Finds the page and the paginated view that an address belongs to.
+	 *
+	 * @param string $url Full address or path, with or without .md.
+	 * @return array{post: WP_Post, paged: int}|null The page and the view number, or null when none matches or it is on another site.
+	 */
+	public function resolve_view( string $url ): ?array {
 		$parts = wp_parse_url( $url );
 		$home  = wp_parse_url( home_url() );
 
@@ -224,11 +296,27 @@ final class Urls {
 		$path  = $this->relative_path( (string) ( $parts['path'] ?? '' ) );
 		$route = $this->parse_route( $path );
 
-		if ( null !== $route ) {
-			return self::ROUTE_PAGE === $route['type'] ? $this->resolve( $route['path'], $route['home_alias'], false ) : null;
+		if ( null !== $route && self::ROUTE_PAGE !== $route['type'] ) {
+			return null;
 		}
 
-		return $this->resolve( $path, false, false );
+		$path = null === $route ? $path : $route['path'];
+		$post = $this->resolve( $path, null !== $route && $route['home_alias'], false );
+
+		if ( null !== $post ) {
+			return array(
+				'post'  => $post,
+				'paged' => 1,
+			);
+		}
+
+		$view = self::split_view( $path );
+		$post = null === $view ? null : $this->resolve( $view['path'], false, false );
+
+		return null === $view || null === $post || $view['paged'] > $this->view_count( $post ) ? null : array(
+			'post'  => $post,
+			'paged' => $view['paged'],
+		);
 	}
 
 	/**

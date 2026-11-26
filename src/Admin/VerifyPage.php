@@ -246,12 +246,15 @@ final class VerifyPage implements Hookable {
 	 * @return void
 	 */
 	private function result( string $url, string $selector, string $strip, string $headings ): void {
-		$post = $this->urls->resolve_url( $url );
+		$view = $this->urls->resolve_view( $url );
 
-		if ( ! $post instanceof WP_Post ) {
+		if ( null === $view ) {
 			$this->notice( 'error', __( 'No page was found for that URL on this site.', 'agentwelcome' ) );
 			return;
 		}
+
+		$post  = $view['post'];
+		$paged = $view['paged'];
 
 		$selectors = new Selector();
 		$overrides = array();
@@ -275,22 +278,22 @@ final class VerifyPage implements Hookable {
 			$this->notice( 'info', __( 'The selectors below were applied to this check only. The comparison shows what would change if you saved them.', 'agentwelcome' ) );
 		}
 
-		$result = $this->verifier->verify( $post, $overrides );
+		$result = $this->verifier->verify( $post, $overrides, true, $paged );
 
 		if ( null !== $result->page && RenderResult::FALLBACK === $result->page->source ) {
 			$this->notice( 'warning', '' === $result->page->notice ? __( 'Generated from the post content only.', 'agentwelcome' ) : $result->page->notice );
 		}
 
-		$permalink = (string) $this->urls->permalink( $post );
+		$permalink = (string) $this->urls->view_url( $post, $paged );
 
 		View::render(
 			'verify-result',
 			array(
 				'post'       => $post,
 				'title'      => get_the_title( $post ),
-				'md_url'     => $this->urls->markdown_url( $post ),
+				'md_url'     => $this->urls->markdown_url( $post, $paged ),
 				'result'     => $result,
-				'update_url' => VerifyResult::NOT_SERVED === $result->state ? '' : $this->update_url( $post, $permalink ),
+				'update_url' => VerifyResult::NOT_SERVED === $result->state || $paged > 1 ? '' : $this->update_url( $post, $permalink ),
 				'stored_at'  => null === $result->entry ? '' : wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $result->entry->timestamp() ),
 				'applied'    => ! empty( $overrides ),
 			)

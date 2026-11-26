@@ -22,4 +22,6 @@ final class PostMeta {
 	public const PAGE_DESCRIPTION = '_agentwelcome_page_description';
 	/** Title of the page used in the Markdown, stored when it is generated. */
 	public const TITLE = '_agentwelcome_page_title';
+	/** Number of paginated views that the rendered page links to, stored when it has more than one. */
+	public const VIEWS = '_agentwelcome_page_views';
 }

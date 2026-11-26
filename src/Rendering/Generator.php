@@ -43,10 +43,11 @@ final class Generator {
 	 *
 	 * @param WP_Post                                                                   $post      The page.
 	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
+	 * @param int                                                                       $paged     Number of the paginated view, 1 for the page itself.
 	 * @return GeneratedPage The Markdown and where it came from.
 	 */
-	public function generate( WP_Post $post, array $overrides = array() ): GeneratedPage {
-		return $this->build( $post, $this->renderer->render( $post ), $overrides );
+	public function generate( WP_Post $post, array $overrides = array(), int $paged = 1 ): GeneratedPage {
+		return $this->build( $post, $this->renderer->render( $post, $paged ), $overrides, $paged );
 	}
 
 	/**
@@ -80,19 +81,20 @@ final class Generator {
 	 * @param WP_Post                                                                   $post      The page.
 	 * @param RenderResult                                                              $render    The rendered page.
 	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
+	 * @param int                                                                       $paged     Number of the paginated view, 1 for the page itself.
 	 * @return GeneratedPage The Markdown and where it came from.
 	 */
-	public function build( WP_Post $post, RenderResult $render, array $overrides = array() ): GeneratedPage {
+	public function build( WP_Post $post, RenderResult $render, array $overrides = array(), int $paged = 1 ): GeneratedPage {
 		if ( RenderResult::RESTRICTED === $render->source ) {
 			return new GeneratedPage( '', $render->source, '', null, '', null, '', '', '', PageTitle::POST, $render->restricted );
 		}
 
-		$url       = (string) $this->urls->permalink( $post );
+		$url       = (string) $this->urls->view_url( $post, $paged );
 		$selector  = $this->content_selector( $overrides );
 		$extractor = ! empty( $overrides['strip'] ) || ! empty( $overrides['headings'] ) ? $this->extractor->with_extra( $overrides['strip'] ?? array(), $overrides['headings'] ?? array() ) : $this->extractor;
 		$node      = $extractor->extract( $render->html, $selector, $url );
 		$body      = null === $node ? '' : $this->converter->convert( $node );
-		$chosen    = $this->title( $post, $render );
+		$chosen    = $this->title( $post, $render, $paged );
 		$title     = $chosen['title'];
 
 		if ( '' !== $title && ( null === $node || 0 === $node->getElementsByTagName( 'h1' )->length ) ) {
@@ -130,7 +132,9 @@ final class Generator {
 		// A page built without its rendered HTML has no robots information, so its result is unknown.
 		$known = RenderResult::LOOPBACK === $render->source || $noindex;
 
-		return new GeneratedPage( $markdown, $render->source, $render->notice, $meta, $found['source'], $known ? $noindex : null, $source, $title, $chosen['original'], $chosen['used'], RenderResult::LOOPBACK === $render->source ? '' : null );
+		$views = RenderResult::LOOPBACK === $render->source ? Pagination::count( $render->html, (string) $this->urls->view_url( $post, 1 ) ) : null;
+
+		return new GeneratedPage( $markdown, $render->source, $render->notice, $meta, $found['source'], $known ? $noindex : null, $source, $title, $chosen['original'], $chosen['used'], RenderResult::LOOPBACK === $render->source ? '' : null, $views );
 	}
 
 	/**
@@ -138,9 +142,10 @@ final class Generator {
 	 *
 	 * @param WP_Post      $post   The page.
 	 * @param RenderResult $render The rendered page.
+	 * @param int          $paged  Number of the paginated view, 1 for the page itself.
 	 * @return array{title: string, original: string, used: string} The title, the title tag as found, and which one was used.
 	 */
-	private function title( WP_Post $post, RenderResult $render ): array {
+	private function title( WP_Post $post, RenderResult $render, int $paged ): array {
 		$post_title = trim( html_entity_decode( wp_strip_all_tags( get_the_title( $post ) ), ENT_QUOTES, 'UTF-8' ) );
 
 		if ( RenderResult::LOOPBACK !== $render->source ) {
@@ -152,6 +157,6 @@ final class Generator {
 		$names = array_map( 'strval', (array) apply_filters( 'agentwelcome_title_site_names', $names, $post ) );
 		$home  = 'page' === get_option( 'show_on_front' ) && (int) get_option( 'page_on_front' ) === $post->ID;
 
-		return PageTitle::choose( $post_title, $read['title'], $names, (bool) $this->options->get( 'title_strip_site', true ), 'post' !== $this->options->get( 'title_source', 'page' ), $home );
+		return PageTitle::choose( $post_title, $read['title'], $names, (bool) $this->options->get( 'title_strip_site', true ), 'post' !== $this->options->get( 'title_source', 'page' ), $home, $paged );
 	}
 }

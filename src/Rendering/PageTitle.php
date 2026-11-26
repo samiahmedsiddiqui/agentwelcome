@@ -56,9 +56,10 @@ final class PageTitle {
 	 * @param bool     $strip      Whether to remove the site name.
 	 * @param bool     $use_page   Whether to prefer the page title over the post title.
 	 * @param bool     $is_home    Whether this is the homepage, which keeps its full title.
+	 * @param int      $paged      Number of the paginated view, 1 for the page itself.
 	 * @return array{title: string, original: string, used: string} The title, the title tag as found, and PAGE or POST.
 	 */
-	public static function choose( string $post_title, string $page_title, array $names, bool $strip, bool $use_page, bool $is_home ): array {
+	public static function choose( string $post_title, string $page_title, array $names, bool $strip, bool $use_page, bool $is_home, int $paged = 1 ): array {
 		if ( ! $use_page || '' === $page_title ) {
 			return array(
 				'title'    => $post_title,
@@ -68,7 +69,7 @@ final class PageTitle {
 		}
 
 		return array(
-			'title'    => $strip && ! $is_home ? self::strip_site_name( $page_title, $names ) : $page_title,
+			'title'    => $strip && ! $is_home ? self::strip_site_name( $page_title, $names, $paged ) : $page_title,
 			'original' => $page_title,
 			'used'     => self::PAGE,
 		);
@@ -79,9 +80,19 @@ final class PageTitle {
 	 *
 	 * @param string   $title Title on one line.
 	 * @param string[] $names Site names that may be removed.
+	 * @param int      $paged Number of the paginated view. Its part at the end of the title, such as "Page 2", is kept.
 	 * @return string The title, or the original when nothing would be left.
 	 */
-	public static function strip_site_name( string $title, array $names ): string {
+	public static function strip_site_name( string $title, array $names, int $paged = 1 ): string {
+		// The site name can stand before the page number, as in "Blog - Site - Page 2".
+		if ( $paged > 1 && 1 === preg_match( '/\A(.+)(\s+' . self::SEPARATORS . '\s+.*)\z/u', $title, $parts ) && 1 === preg_match( '/(?<!\d)' . $paged . '(?!\d)/', $parts[2] ) ) {
+			$head = self::strip_site_name( $parts[1], $names );
+
+			if ( $head !== $parts[1] ) {
+				return $head . $parts[2];
+			}
+		}
+
 		$names = array_filter( array_map( 'trim', $names ), static fn( string $name ): bool => '' !== $name );
 
 		usort(

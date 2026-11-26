@@ -58,6 +58,27 @@ final class PageTitleTest extends TestCase {
 		);
 	}
 
+	/**
+	 * @dataProvider paged_cases
+	 */
+	public function test_strip_site_name_of_a_later_view( string $title, string $expected ): void {
+		$this->assertSame( $expected, PageTitle::strip_site_name( $title, array( 'Site Name', 'Area 2' ), 2 ) );
+	}
+
+	/**
+	 * @return array<string, array{string, string}>
+	 */
+	public static function paged_cases(): array {
+		return array(
+			'name before the page'    => array( 'Data-Residency Blog - Site Name - Page 2', 'Data-Residency Blog - Page 2' ),
+			'page of many'            => array( 'Blog | Site Name | Page 2 of 18', 'Blog | Page 2 of 18' ),
+			'name at the end'         => array( 'Blog - Page 2 - Site Name', 'Blog - Page 2' ),
+			'name at the start'       => array( 'Site Name - Blog - Page 2', 'Blog - Page 2' ),
+			'name holds the number'   => array( 'Blog - Area 2', 'Blog' ),
+			'another number is kept'  => array( 'Blog - Site Name - Page 12', 'Blog - Site Name - Page 12' ),
+		);
+	}
+
 	public function test_read_decodes_the_title_and_finds_the_site_name(): void {
 		$html = '<html><head><title>Fish &amp; Chips &#8211;
  Caf&eacute;</title><meta property="og:site_name" content="Caf&eacute; &amp; Co"></head></html>';

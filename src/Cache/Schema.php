@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 final class Schema implements Hookable {
 
 	/** Version of the table layout. Raise it when the columns change. */
-	public const DB_VERSION = '3';
+	public const DB_VERSION = '4';
 	/** Option that records the installed table version. */
 	public const OPTION = 'agentwelcome_db_version';
 
@@ -76,9 +76,15 @@ final class Schema implements Hookable {
 		$table   = self::table();
 		$collate = $wpdb->get_charset_collate();
 
+		// A copy was kept per page only. The page number joins the key so each paginated view of a list page has its own copy.
+		if ( false !== $installed && null === $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'paged' ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table.
+			$wpdb->query( "ALTER TABLE {$table} ADD paged int(10) unsigned NOT NULL default 1 AFTER post_id, DROP PRIMARY KEY, ADD PRIMARY KEY (post_id,paged)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table.
+		}
+
 		dbDelta(
 			"CREATE TABLE {$table} (
 			post_id bigint(20) unsigned NOT NULL,
+			paged int(10) unsigned NOT NULL default 1,
 			markdown longtext NOT NULL,
 			content_hash char(40) NOT NULL default '',
 			source varchar(20) NOT NULL default 'loopback',
@@ -87,7 +93,7 @@ final class Schema implements Hookable {
 			state varchar(10) NOT NULL default 'fresh',
 			noindex tinyint(1) default NULL,
 			restricted varchar(80) default NULL,
-			PRIMARY KEY  (post_id),
+			PRIMARY KEY  (post_id,paged),
 			KEY state (state)
 			) {$collate};"
 		);

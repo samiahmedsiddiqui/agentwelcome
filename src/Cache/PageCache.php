@@ -13,6 +13,8 @@ use AgentWelcome\Content\Eligibility;
 use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Contracts\Hookable;
 use AgentWelcome\Environment\Environment;
+use AgentWelcome\Http\Urls;
+use AgentWelcome\Rendering\GeneratedPage;
 use AgentWelcome\Rendering\Generator;
 use AgentWelcome\Rendering\RenderResult;
 use WP_Post;
@@ -44,30 +46,33 @@ final class PageCache implements Hookable {
 	 * @param Lock        $lock        Locks and render slots.
 	 * @param Eligibility $eligibility Decides whether a page is served.
 	 * @param Environment $environment Tells whether the plugin is running on this site.
+	 * @param Urls        $urls        Counts the paginated views of a page.
 	 */
 	public function __construct(
 		private Store $store,
 		private Generator $generator,
 		private Lock $lock,
 		private Eligibility $eligibility,
-		private Environment $environment
+		private Environment $environment,
+		private Urls $urls
 	) {}
 
 	/**
 	 * @return void
 	 */
 	public function register(): void {
-		add_action( self::JOB, array( $this, 'run_job' ) );
+		add_action( self::JOB, array( $this, 'run_job' ), 10, 2 );
 	}
 
 	/**
 	 * Gets the copy to serve for a page. A current copy is returned as is, an out-of-date one is returned and refreshed later, and a missing one is generated while the visitor waits.
 	 *
-	 * @param WP_Post $post The page.
+	 * @param WP_Post $post  The page.
+	 * @param int     $paged Number of the paginated view, 1 for the page itself.
 	 * @return Served|null Null when the page is still being generated elsewhere after the wait, or when every render slot is busy.
 	 */
-	public function fetch( WP_Post $post ): ?Served {
-		$entry = $this->store->get( $post->ID );
+	public function fetch( WP_Post $post, int $paged = 1 ): ?Served {
+		$entry = $this->store->get( $post->ID, true, $paged );
 		$state = Freshness::classify( $entry, AGENTWELCOME_VERSION );
 
 		if ( null !== $entry && Freshness::FRESH === $state ) {
@@ -75,7 +80,7 @@ final class PageCache implements Hookable {
 		}
 
 		if ( null !== $entry && Freshness::STALE === $state ) {
-			$this->schedule( $post->ID, RenderResult::FALLBACK === $entry->source ? self::FALLBACK_RETRY_DELAY : self::REFRESH_DELAY_SECONDS );
+			$this->schedule( $post->ID, RenderResult::FALLBACK === $entry->source ? self::FALLBACK_RETRY_DELAY : self::REFRESH_DELAY_SECONDS, $paged );
 
 			return new Served( $entry, Served::STALE );
 		}
@@ -86,13 +91,13 @@ final class PageCache implements Hookable {
 			$slot = $this->take_render_slot();
 
 			if ( null === $slot ) {
-				$this->schedule( $post->ID, self::REFRESH_DELAY_SECONDS );
+				$this->schedule( $post->ID, self::REFRESH_DELAY_SECONDS, $paged );
 
 				return null !== $entry ? new Served( $entry, Served::STALE ) : null;
 			}
 
 			try {
-				$served = $this->generate_unless_fresh( $post );
+				$served = $this->generate_unless_fresh( $post, $paged );
 			} finally {
 				$this->lock->release_slot( $slot );
 			}
@@ -107,7 +112,7 @@ final class PageCache implements Hookable {
 
 			usleep( self::POLL_MICROSECONDS );
 
-			$current = $this->store->get( $post->ID );
+			$current = $this->store->get( $post->ID, true, $paged );
 
 			if ( null !== $current && Freshness::OUTDATED !== Freshness::classify( $current, AGENTWELCOME_VERSION ) ) {
 				return new Served( $current, Served::HIT );
@@ -129,48 +134,50 @@ final class PageCache implements Hookable {
 	/**
 	 * Generates and stores the copy of a page, even when a current one exists.
 	 *
-	 * @param WP_Post $post The page.
+	 * @param WP_Post $post  The page.
+	 * @param int     $paged Number of the paginated view, 1 for the page itself.
 	 * @return Entry|null The new copy, or null when another request holds the lock.
 	 */
-	public function regenerate( WP_Post $post ): ?Entry {
-		if ( ! $this->lock->acquire( $post->ID ) ) {
+	public function regenerate( WP_Post $post, int $paged = 1 ): ?Entry {
+		if ( ! $this->lock->acquire( $post->ID, $paged ) ) {
 			return null;
 		}
 
 		try {
-			$entry = $this->build( $post );
+			$entry = $this->build( $post, $paged );
 			$this->store->save( $entry );
 
 			return $entry;
 		} finally {
-			$this->lock->release( $post->ID );
+			$this->lock->release( $post->ID, $paged );
 		}
 	}
 
 	/**
 	 * Generates the copy of a page unless another request has just stored a current one.
 	 *
-	 * @param WP_Post $post The page.
+	 * @param WP_Post $post  The page.
+	 * @param int     $paged Number of the paginated view, 1 for the page itself.
 	 * @return Served|null MISS when this request generated the copy, HIT when it found a current one, or null when another request holds the lock.
 	 */
-	private function generate_unless_fresh( WP_Post $post ): ?Served {
-		if ( ! $this->lock->acquire( $post->ID ) ) {
+	private function generate_unless_fresh( WP_Post $post, int $paged ): ?Served {
+		if ( ! $this->lock->acquire( $post->ID, $paged ) ) {
 			return null;
 		}
 
 		try {
-			$current = $this->store->get( $post->ID );
+			$current = $this->store->get( $post->ID, true, $paged );
 
 			if ( null !== $current && Freshness::FRESH === Freshness::classify( $current, AGENTWELCOME_VERSION ) ) {
 				return new Served( $current, Served::HIT );
 			}
 
-			$entry = $this->build( $post );
+			$entry = $this->build( $post, $paged );
 			$this->store->save( $entry );
 
 			return new Served( $entry, Served::MISS );
 		} finally {
-			$this->lock->release( $post->ID );
+			$this->lock->release( $post->ID, $paged );
 		}
 	}
 
@@ -178,9 +185,10 @@ final class PageCache implements Hookable {
 	 * Cron callback that refreshes one page, or removes its copy when it is no longer served.
 	 *
 	 * @param int $post_id Page ID.
+	 * @param int $paged   Number of the paginated view, 1 for the page itself.
 	 * @return void
 	 */
-	public function run_job( int $post_id ): void {
+	public function run_job( int $post_id, int $paged = 1 ): void {
 		if ( ! $this->environment->is_active() ) {
 			return;
 		}
@@ -192,7 +200,9 @@ final class PageCache implements Hookable {
 			return;
 		}
 
-		$this->regenerate( $post );
+		if ( $paged <= $this->urls->view_count( $post ) ) {
+			$this->regenerate( $post, $paged );
+		}
 	}
 
 	/**
@@ -200,10 +210,11 @@ final class PageCache implements Hookable {
 	 *
 	 * @param int $post_id Page ID.
 	 * @param int $delay   Seconds to wait.
+	 * @param int $paged   Number of the paginated view, 1 for the page itself.
 	 * @return void
 	 */
-	public function schedule( int $post_id, int $delay = self::REFRESH_DELAY_SECONDS ): void {
-		$args = array( $post_id );
+	public function schedule( int $post_id, int $delay = self::REFRESH_DELAY_SECONDS, int $paged = 1 ): void {
+		$args = $paged > 1 ? array( $post_id, $paged ) : array( $post_id );
 
 		if ( ! $this->environment->is_active() || false !== wp_next_scheduled( self::JOB, $args ) ) {
 			return;
@@ -228,25 +239,36 @@ final class PageCache implements Hookable {
 	/**
 	 * Generates the copy of a page. A copy built without the rendered page is kept out of date so it is retried later.
 	 *
-	 * @param WP_Post $post The page.
+	 * @param WP_Post $post  The page.
+	 * @param int     $paged Number of the paginated view, 1 for the page itself.
 	 * @return Entry The new copy.
 	 */
-	private function build( WP_Post $post ): Entry {
-		$page     = $this->generator->generate( $post );
+	private function build( WP_Post $post, int $paged ): Entry {
+		$page     = $this->generator->generate( $post, array(), $paged );
 		$fallback = RenderResult::FALLBACK === $page->source;
 
-		if ( RenderResult::RESTRICTED === $page->source ) {
-			delete_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION );
-			delete_post_meta( $post->ID, PostMeta::TITLE );
+		$this->remember_views( $post->ID, $page, $paged );
 
-			return new Entry( $post->ID, '', sha1( '' ), $page->source, AGENTWELCOME_VERSION, gmdate( 'Y-m-d H:i:s' ), Entry::FRESH, null, $page->restricted );
+		// The post content is not a substitute for a paginated view, so the copy stays empty and is retried later.
+		if ( $paged > 1 && $fallback ) {
+			return new Entry( $post->ID, '', sha1( '' ), RenderResult::FALLBACK, AGENTWELCOME_VERSION, gmdate( 'Y-m-d H:i:s' ), Entry::STALE, null, null, $paged );
 		}
 
-		if ( null !== $page->meta ) {
+		// The description and title kept for llms.txt belong to the page itself, not to its later views.
+		if ( RenderResult::RESTRICTED === $page->source ) {
+			if ( 1 === $paged ) {
+				delete_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION );
+				delete_post_meta( $post->ID, PostMeta::TITLE );
+			}
+
+			return new Entry( $post->ID, '', sha1( '' ), $page->source, AGENTWELCOME_VERSION, gmdate( 'Y-m-d H:i:s' ), Entry::FRESH, null, $page->restricted, $paged );
+		}
+
+		if ( 1 === $paged && null !== $page->meta ) {
 			'' === $page->meta ? delete_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION ) : update_post_meta( $post->ID, PostMeta::PAGE_DESCRIPTION, $page->meta );
 		}
 
-		if ( ! $fallback && '' !== $page->title ) {
+		if ( 1 === $paged && ! $fallback && '' !== $page->title ) {
 			update_post_meta( $post->ID, PostMeta::TITLE, $page->title );
 		}
 
@@ -259,7 +281,24 @@ final class PageCache implements Hookable {
 			gmdate( 'Y-m-d H:i:s' ),
 			$fallback ? Entry::STALE : Entry::FRESH,
 			$page->noindex,
-			$page->restricted
+			$page->restricted,
+			$paged
 		);
+	}
+
+	/**
+	 * Keeps the number of views that the page links to. A later view can only raise it, for lists that link to the next view alone.
+	 *
+	 * @param int           $post_id Page ID.
+	 * @param GeneratedPage $page    The generated view.
+	 * @param int           $paged   Number of the paginated view, 1 for the page itself.
+	 * @return void
+	 */
+	private function remember_views( int $post_id, GeneratedPage $page, int $paged ): void {
+		if ( 1 === $paged && ( RenderResult::RESTRICTED === $page->source || 1 === $page->views ) ) {
+			delete_post_meta( $post_id, PostMeta::VIEWS );
+		} elseif ( $page->views > max( 1, (int) get_post_meta( $post_id, PostMeta::VIEWS, true ) ) ) {
+			update_post_meta( $post_id, PostMeta::VIEWS, $page->views );
+		}
 	}
 }

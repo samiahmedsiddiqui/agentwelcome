@@ -138,7 +138,7 @@ final class Plugin {
 			$description
 		);
 		$lock        = new Lock();
-		$pages       = new PageCache( $store, $generator, $lock, $eligibility, $environment );
+		$pages       = new PageCache( $store, $generator, $lock, $eligibility, $environment, $urls );
 		$batch       = new Batch( $store, $pages, $post_types, $eligibility, $environment, $candidates );
 		$invalidator = new Invalidator( $store, $pages, $batch, $post_types );
 		$changes     = new Changes( $batch, $environment );

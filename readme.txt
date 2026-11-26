@@ -62,6 +62,10 @@ No. Nothing guarantees that. These tools decide for themselves whether to read l
 
 Add `.md` to the page URL without the trailing slash: `/about/` becomes `/about.md` and `/services/web/` becomes `/services/web.md`. The homepage is `/index.md`. `/about/index.html.md`, `/about/index.md` and `/index.html.md` also work. You can choose `/index.html.md` as the homepage URL under AgentWelcome > Settings > Content > Homepage; the chosen one is listed in llms.txt.
 
+= Are paginated pages such as /blog/page/2/ available as Markdown? =
+
+Yes: `/blog/page/2.md` returns the Markdown of `/blog/page/2/`, for the blog page and for any page that links to its own `/page/2/`. A number beyond the last page gets a 404. llms.txt lists the list page once, not each of its pages. When a list loads its pages another way, return the number of pages from the `agentwelcome_page_count` filter.
+
 = Why do I get a 404 for a page? =
 
 The page is not published, is password protected, belongs to an excluded post type, is hidden in the editor, matches an exclusion rule, is set to noindex by an SEO plugin, or has no pretty permalink. Verify & Preview tells you which.
@@ -196,6 +200,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 == Changelog ==
 
 = 1.1.0 =
+* New: the pages of the blog page and other list pages, such as `/blog/page/2/`, are available as Markdown at `/blog/page/2.md`, each stored and refreshed on its own.
 * New: pages that visitors cannot read, because a membership or access-control plugin answers with HTTP 401 or 403 or redirects to a login page, are left out of llms.txt, llms-full.txt and the Markdown pages. A setting and the `agentwelcome_is_restricted` filter include them.
 * Change: noindex is read from the page's robots meta tag and X-Robots-Tag header instead of from SEO plugin settings, so a whole post type or a theme setting is respected. llms.txt lists only pages that have been generated, and every page is generated in the background after an update.
 * Change: the title in the Markdown, llms.txt and llms-full.txt is now the page's own title without the site name. A setting switches back to the WordPress post title.
@@ -206,6 +211,8 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 * New: WooCommerce cart, checkout, My account and terms pages are left out of llms.txt and the Markdown pages.
 * Change: the description in llms.txt and the Markdown uses the page's meta description, then the excerpt, instead of reading the SEO plugins' saved descriptions.
 * Fix: a `.md` address that is not served now gets a plain text 404 from the plugin, so another plugin or a host rule can no longer redirect it to the homepage.
+* Fix: links that the page builds from its own address, such as pagination links, no longer carry the `agentwelcome_render` argument into the Markdown.
+* Fix: on later pages of a list the site name is removed from a title such as "Blog - Site - Page 2", and the page number is kept.
 * Fix: links that touch in the HTML, such as pagination numbers, now have a space between them in the Markdown.
 
 = 1.0.0 =

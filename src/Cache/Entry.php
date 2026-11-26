@@ -29,6 +29,7 @@ final class Entry {
 	 * @param string      $state             Either FRESH or STALE.
 	 * @param bool|null   $noindex        Whether the page said noindex when it was generated, or null when unknown.
 	 * @param string|null $restricted   Why visitors could not read the page when it was generated, an empty string when they could, or null when unknown.
+	 * @param int         $paged        Number of the paginated view of a list page, 1 for the page itself.
 	 */
 	public function __construct(
 		public int $post_id,
@@ -39,7 +40,8 @@ final class Entry {
 		public string $generated_at,
 		public string $state,
 		public ?bool $noindex = null,
-		public ?string $restricted = null
+		public ?string $restricted = null,
+		public int $paged = 1
 	) {}
 
 	/**
