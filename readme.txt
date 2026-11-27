@@ -199,7 +199,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 
 == Changelog ==
 
-= 1.1.1 =
+= 1.2.0 =
 * Fix: Verify & Preview finds a page with a non-Latin slug, such as Arabic or Chinese, when its percent-encoded address is entered.
 
 = 1.1.0 =
