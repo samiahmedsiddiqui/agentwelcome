@@ -74,13 +74,15 @@ add_filter( 'wpml_post_language_details', function ( $value, $id ) {
 	return array( 'language_code' => $code, 'locale' => kit_wpml_languages()[ $code ]['default_locale'] );
 }, 10, 2 );
 add_filter( 'wpml_is_translated_post_type', fn( $value, $type ) => in_array( $type, array( 'post', 'page' ), true ), 10, 2 );
-add_filter( 'wpml_permalink', fn( $url, $lang = null ) => kit_wpml_convert( $url, $lang ? $lang : $GLOBALS['kit_wpml_current'] ), 10, 2 );
+// The option kit_wpml_unprefixed makes posts keep the default language address, as seen on a real site.
+add_filter( 'wpml_permalink', fn( $url, $lang = null ) => get_option( 'kit_wpml_unprefixed' ) && false !== strpos( $url, 'post-ar' ) ? $url : kit_wpml_convert( $url, $lang ? $lang : $GLOBALS['kit_wpml_current'] ), 10, 2 );
 
 add_filter( 'home_url', fn( $url ) => kit_wpml_convert( $url, $GLOBALS['kit_wpml_current'] ) );
 foreach ( array( 'post_link', 'page_link', 'post_type_link' ) as $kit_hook ) {
 	add_filter( $kit_hook, function ( $url, $post ) {
 		$id   = is_object( $post ) ? $post->ID : (int) $post;
 		$code = (string) get_post_meta( $id, 'kit_lang', true );
+		$code = 'post_link' === current_filter() && get_option( 'kit_wpml_unprefixed' ) ? 'en' : $code;
 		return kit_wpml_convert( $url, $code ? $code : 'en' );
 	}, 10, 2 );
 }

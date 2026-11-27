@@ -69,6 +69,16 @@ final class WpmlTest extends TestCase {
 		);
 	}
 
+	public function test_moves_an_address_under_its_language(): void {
+		$homes = self::DIRECTORIES;
+
+		$this->assertSame( 'https://example.org/ar/blog/post/', Wpml::localise( 'https://example.org/blog/post/', 'ar', $homes ) );
+		$this->assertSame( 'https://example.org/ar/blog/post/', Wpml::localise( 'https://example.org/ar/blog/post/', 'ar', $homes ) );
+		$this->assertSame( 'https://example.org/zh-hans/contact', Wpml::localise( 'https://example.org/ar/contact', 'zh-hans', $homes ) );
+		$this->assertSame( 'https://example.org/blog/post/', Wpml::localise( 'https://example.org/ar/blog/post/', 'en', $homes ) );
+		$this->assertSame( 'https://example.org/ar/', Wpml::localise( 'https://example.org/', 'ar', $homes ) );
+	}
+
 	public function test_address_outside_every_home_matches_nothing(): void {
 		$this->assertNull( Wpml::match( 'example.org', '/llms.txt', array( 'en' => 'https://example.org/en' ) ) );
 	}

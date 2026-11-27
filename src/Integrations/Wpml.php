@@ -95,6 +95,28 @@ final class Wpml implements Hookable {
 	}
 
 	/**
+	 * Moves an address under the home of a language, when it is under the home of another one.
+	 *
+	 * @param string                $url      Address.
+	 * @param string                $language Language code.
+	 * @param array<string, string> $homes    Home address by language code, the default language first.
+	 * @return string The address, unchanged when it already belongs to the language or to none.
+	 */
+	public static function localise( string $url, string $language, array $homes ): string {
+		$parts = (array) wp_parse_url( $url );
+		$path  = (string) ( $parts['path'] ?? '' );
+		$found = self::match( (string) ( $parts['host'] ?? '' ), $path, $homes );
+
+		if ( null === $found || $found['language'] === $language || ! isset( $homes[ $language ] ) ) {
+			return $url;
+		}
+
+		$slash = str_ends_with( $path, '/' ) ? '/' : '';
+
+		return $homes[ $language ] . ( '' === $found['path'] ? $slash : '/' . $found['path'] . $slash );
+	}
+
+	/**
 	 * Writes percent escapes in lower case, as WordPress does in permalinks.
 	 *
 	 * @param string $path Path.
@@ -335,7 +357,15 @@ final class Wpml implements Hookable {
 			return trailingslashit( $home );
 		}
 
-		return apply_filters( 'wpml_permalink', $url, $language, true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WPML's hook.
+		// An address that already belongs to the language is left as WordPress built it.
+		if ( self::localise( $url, $language, $this->homes() ) === $url ) {
+			return $url;
+		}
+
+		$converted = apply_filters( 'wpml_permalink', $url, $language, true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WPML's hook.
+
+		// WPML can return the default language address for some pages.
+		return self::localise( is_string( $converted ) && '' !== $converted ? $converted : $url, $language, $this->homes() );
 	}
 
 	/**

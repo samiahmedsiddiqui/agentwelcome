@@ -163,6 +163,15 @@ try:
     check("page/2.md is served per language", is_md(code, h) and "مقال" in body and "Wpml Post" not in body, (code, body[:400]))
     check("a view beyond the language's posts is a 404", plain_404(*get("/ar/integ-wpml-blog-ar/page/3.md", follow=False)[:2]))
 
+    print("--- a post that WPML leaves at the default language address")
+    wpcli("option", "update", "kit_wpml_unprefixed", "1")
+    php('global $wpdb; $wpdb->query("DELETE FROM {$wpdb->prefix}agentwelcome_pages");')
+    code, h, body, _ = get("/ar/integ-wpml-post-ar-2.md")
+    check("its Markdown, front matter and canonical use the language directory", is_md(code, h) and 'url: "%s"' % url("/ar/integ-wpml-post-ar-2/") in body and "/ar/integ-wpml-post-ar-2/>" in h.get("link", ""), (code, body[:300]))
+    html = get("/ar/integ-wpml-post-ar-2/")[2]
+    check("so does its discovery tag", 'type="text/markdown" href="%s"' % url("/ar/integ-wpml-post-ar-2.md") in html, re.findall(r'type="text/markdown" href="[^"]*"', html))
+    wpcli("option", "delete", "kit_wpml_unprefixed")
+
     print("--- exclusions")
     wpcli("option", "update", "agentwelcome_settings", json.dumps({"excluded_terms": [ids["term"]]}), "--format=json")
     check("excluding a term also leaves out the posts of its translations", plain_404(*get("/ar/integ-wpml-post-ar-1.md", follow=False)[:2]) and is_md(*get("/ar/integ-wpml-post-ar-2.md")[:2]))
@@ -193,6 +202,7 @@ try:
     check("and llms.txt has no language parts", "## العربية" not in get("/llms.txt")[2])
 finally:
     wpcli("option", "delete", "kit_wpml")
+    wpcli("option", "delete", "kit_wpml_unprefixed")
     php(CLEANUP)
     for k, v in old.items():
         wpcli("option", "update", k, v)
