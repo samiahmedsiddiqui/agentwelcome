@@ -33,6 +33,26 @@ Filters and examples for changing what the plugin does from code.
 | `agentwelcome_ai_crawlers` | User agents of the AI crawlers that Verify & Preview checks against robots.txt (GPTBot, ClaudeBot, PerplexityBot and others by default). |
 | `agentwelcome_woocommerce_excluded_pages` | WooCommerce pages that are left out: `cart`, `checkout`, `myaccount` and `terms` by default. Return a shorter list to include one. |
 
+### Translation plugins
+
+These are the points the WPML support uses. With no translation plugin they leave everything unchanged.
+
+| Hook | Purpose |
+| --- | --- |
+| `agentwelcome_site_address` | Home address of the site, the same on every request. Used to notice a moved or copied site. |
+| `agentwelcome_request` | How a request is read: `path` below the home of its language, `language`, `source`, `index_url` (home that serves the llms files instead) and `shared` (whether a built llms file may be saved). |
+| `agentwelcome_url_language` | Language code of an address. Receives the code and the address. |
+| `agentwelcome_post_language` | Language code of a page. Receives the code and the `WP_Post`. |
+| `agentwelcome_switch_language` | Action: make a language active. Receives the code. |
+| `agentwelcome_restore_language` | Action: go back to the language that was active before. |
+| `agentwelcome_languages` | Languages listed in `llms.txt`, as name by code with the default first. |
+| `agentwelcome_home_url` | Home address of the active language. Receives the address and the path. |
+| `agentwelcome_permalink` | Permalink of a page, with its language active. Receives the address and the `WP_Post`. |
+| `agentwelcome_front_page_id` | ID of the static homepage in the active language. |
+| `agentwelcome_excluded_terms` | Excluded term IDs that apply to a page. Receives the IDs and the `WP_Post`. |
+| `agentwelcome_front_matter_language` | `language` value of the metadata block. Receives the value and the `WP_Post`. |
+| `agentwelcome_debug_headers` | Headers sent when `AGENTWELCOME_DEBUG` is true. |
+
 ### Excluding from code
 
 ```php

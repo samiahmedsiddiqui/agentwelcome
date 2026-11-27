@@ -57,7 +57,22 @@ final class SiteAddress {
 			return true;
 		}
 
-		return hash_equals( $saved, self::fingerprint( home_url() ) );
+		// Either address counts, because a translation plugin may change home_url() by language.
+		return hash_equals( $saved, self::fingerprint( self::current() ) ) || hash_equals( $saved, self::fingerprint( home_url() ) );
+	}
+
+	/**
+	 * Address of this site.
+	 *
+	 * @return string The address.
+	 */
+	public static function current(): string {
+		/**
+		 * Filters the address of the site, which must be the same on every request.
+		 *
+		 * @param string $address The home address.
+		 */
+		return (string) apply_filters( 'agentwelcome_site_address', home_url() );
 	}
 
 	/**
@@ -66,6 +81,6 @@ final class SiteAddress {
 	 * @return void
 	 */
 	public static function remember(): void {
-		update_option( self::OPTION, self::fingerprint( home_url() ), true );
+		update_option( self::OPTION, self::fingerprint( self::current() ), true );
 	}
 }

@@ -97,6 +97,16 @@ final class Eligibility {
 	 * @return string|null A reason code, or null when the page is served.
 	 */
 	public function reason( WP_Post $post ): ?string {
+		return Language::run( Language::of( $post ), fn(): ?string => $this->check( $post ) );
+	}
+
+	/**
+	 * Checks a page with its language active.
+	 *
+	 * @param WP_Post $post The page.
+	 * @return string|null A reason code, or null when the page is served.
+	 */
+	private function check( WP_Post $post ): ?string {
 		if ( 'publish' !== $post->post_status ) {
 			return 'not_published';
 		}

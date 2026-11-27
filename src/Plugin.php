@@ -51,6 +51,7 @@ use AgentWelcome\Integrations\CustomPermalinks;
 use AgentWelcome\Integrations\Elementor;
 use AgentWelcome\Integrations\Seo;
 use AgentWelcome\Integrations\WooCommerce;
+use AgentWelcome\Integrations\Wpml;
 use AgentWelcome\Rendering\Converter;
 use AgentWelcome\Rendering\Extractor;
 use AgentWelcome\Rendering\FrontMatter;
@@ -152,6 +153,8 @@ final class Plugin {
 		$llms_full    = new LlmsFullTxt( $store, $eligibility, $urls, $llms_options );
 
 		$this->components = array(
+			// First, so the other components already see the languages.
+			new Wpml(),
 			new Schema(),
 			$pages,
 			$batch,

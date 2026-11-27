@@ -22,9 +22,6 @@ final class WooCommerce implements Hookable {
 	/** WooCommerce page names that are left out by default. */
 	public const PAGES = array( 'cart', 'checkout', 'myaccount', 'terms' );
 
-	/** @var int[]|null IDs of the pages left out, kept for the request. */
-	private ?array $ids = null;
-
 	/**
 	 * @param PageCache $pages Refreshes pages whose status changes.
 	 */
@@ -62,8 +59,6 @@ final class WooCommerce implements Hookable {
 	 * @return void
 	 */
 	public function on_page_changed( mixed $old, mixed $current ): void {
-		$this->ids = null;
-
 		$this->pages->queue( array_values( array_filter( array( absint( $old ), absint( $current ) ) ) ) );
 		OutputCache::purge();
 	}
@@ -81,20 +76,16 @@ final class WooCommerce implements Hookable {
 	 * @return int[] IDs of the pages left out.
 	 */
 	private function ids(): array {
-		if ( null !== $this->ids ) {
-			return $this->ids;
-		}
-
-		$this->ids = array();
+		$ids = array();
 
 		foreach ( (array) apply_filters( 'agentwelcome_woocommerce_excluded_pages', self::PAGES ) as $page ) {
 			$id = absint( apply_filters( 'woocommerce_get_' . $page . '_page_id', get_option( 'woocommerce_' . $page . '_page_id' ) ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- WooCommerce's own filter.
 
 			if ( $id > 0 ) {
-				$this->ids[] = $id;
+				$ids[] = $id;
 			}
 		}
 
-		return $this->ids;
+		return $ids;
 	}
 }

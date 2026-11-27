@@ -27,6 +27,32 @@ Works with default WordPress permalinks and with the [Custom Permalinks](https:/
 3. The page is fetched from its own public URL as a logged-out visitor, so theme templates, ACF output and page builders are included. If that fails, the post content is used instead.
 4. The main content is selected (`main`, `[role="main"]`, `#content`, `#main`, `.site-content`, `article`, then `body`). Navigation, sidebars, forms, scripts, hidden elements and site-level headers and footers are removed. Headers and footers inside an `article`, `main` or `section` are kept. The result is converted to Markdown with a metadata header.
 
+## WPML
+
+When WPML is active, each language that has its own directory or domain is served. With directories, English at the root and Arabic under `/ar/`:
+
+| Page | Markdown URL |
+| --- | --- |
+| `/ar/about/` | `/ar/about.md` |
+| Arabic homepage `/ar/` | `/ar/index.md` (and `/ar/index.html.md`) |
+| `/ar/blog/page/2/` | `/ar/blog/page/2.md` |
+
+* A `.md` address under a language only ever answers with that language. A page without a translation gets the 404, never the default language.
+* There is one `/llms.txt`, at the root. It has the default language first, then a part for each other language with that language's name, tagline and pages. `/ar/llms.txt` redirects to it, and `/llms-full.txt` works the same way.
+* Each page is generated with its own language active, also in the background, and its front matter `language` is the page's own.
+* The home address is checked without the language directory, so a language page does not count as a moved site.
+* Content that WPML does not translate belongs to the default language.
+* Excluding a term also leaves out the posts in its translations. URL patterns are matched without the language directory. Page IDs and the checkbox in the editor apply to one translation each.
+* The format that adds the language as a query argument (`?lang=ar`) is not supported. Polylang is not supported.
+
+### Debug headers
+
+To see what was detected for a `.md` address, add `define( 'AGENTWELCOME_DEBUG', true );` to `wp-config.php`. The `.md` answers, 404s and redirects then carry `X-AgentWelcome-Debug-*` headers with the language, how it was found, the path, the post ID, the request as WordPress read it, and the home address of each language. `X-AgentWelcome-Debug-Inactive` says why the plugin is paused. Remove the line afterwards.
+
+```bash
+curl -sI https://example.com/ar/about.md
+```
+
 ## Markdown by Accept header
 
 Off by default. Turn on **Return Markdown when a client asks for it** under AgentWelcome > Settings > Content > Accept header. A GET or HEAD request for a normal page address (no `.md`) whose `Accept` header ranks `text/markdown` above `text/html` then gets the same stored Markdown as the `.md` address. The `q` values are read, so `text/html, text/markdown;q=0.5`, `*/*`, `text/*` and a missing header still get the HTML page, and so does a tie.

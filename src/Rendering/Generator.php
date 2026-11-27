@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace AgentWelcome\Rendering;
 
 use AgentWelcome\Content\Description;
+use AgentWelcome\Content\Language;
 use AgentWelcome\Http\Urls;
 use AgentWelcome\Settings\Options;
 use WP_Post;
@@ -47,7 +48,7 @@ final class Generator {
 	 * @return GeneratedPage The Markdown and where it came from.
 	 */
 	public function generate( WP_Post $post, array $overrides = array(), int $paged = 1 ): GeneratedPage {
-		return $this->build( $post, $this->renderer->render( $post, $paged ), $overrides, $paged );
+		return Language::run( Language::of( $post ), fn(): GeneratedPage => $this->build( $post, $this->renderer->render( $post, $paged ), $overrides, $paged ) );
 	}
 
 	/**
@@ -85,6 +86,19 @@ final class Generator {
 	 * @return GeneratedPage The Markdown and where it came from.
 	 */
 	public function build( WP_Post $post, RenderResult $render, array $overrides = array(), int $paged = 1 ): GeneratedPage {
+		return Language::run( Language::of( $post ), fn(): GeneratedPage => $this->assemble( $post, $render, $overrides, $paged ) );
+	}
+
+	/**
+	 * Builds the Markdown with the language of the page active.
+	 *
+	 * @param WP_Post                                                                   $post      The page.
+	 * @param RenderResult                                                              $render    The rendered page.
+	 * @param array{selector?: string, strip?: string[], headings?: array<string, int>} $overrides Settings to use instead of the saved ones.
+	 * @param int                                                                       $paged     Number of the paginated view, 1 for the page itself.
+	 * @return GeneratedPage The Markdown and where it came from.
+	 */
+	private function assemble( WP_Post $post, RenderResult $render, array $overrides, int $paged ): GeneratedPage {
 		if ( RenderResult::RESTRICTED === $render->source ) {
 			return new GeneratedPage( '', $render->source, '', null, '', null, '', '', '', PageTitle::POST, $render->restricted );
 		}
@@ -110,7 +124,7 @@ final class Generator {
 				'description' => $found['text'],
 				'type'        => $post->post_type,
 				'modified'    => (string) get_post_modified_time( 'c', true, $post ),
-				'language'    => str_replace( '_', '-', get_locale() ),
+				'language'    => (string) apply_filters( 'agentwelcome_front_matter_language', str_replace( '_', '-', get_locale() ), $post ),
 			)
 		);
 
@@ -155,7 +169,7 @@ final class Generator {
 		$read  = PageTitle::read( $render->html );
 		$names = array( trim( html_entity_decode( wp_strip_all_tags( get_bloginfo( 'name' ) ), ENT_QUOTES, 'UTF-8' ) ), $read['site_name'] );
 		$names = array_map( 'strval', (array) apply_filters( 'agentwelcome_title_site_names', $names, $post ) );
-		$home  = 'page' === get_option( 'show_on_front' ) && (int) get_option( 'page_on_front' ) === $post->ID;
+		$home  = $this->urls->is_front_page( $post );
 
 		return PageTitle::choose( $post_title, $read['title'], $names, (bool) $this->options->get( 'title_strip_site', true ), 'post' !== $this->options->get( 'title_source', 'page' ), $home, $paged );
 	}

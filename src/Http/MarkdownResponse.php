@@ -19,6 +19,42 @@ final class MarkdownResponse {
 	/** Content type of the llms files and plain messages. */
 	public const TEXT = 'text/plain; charset=utf-8';
 
+	/** @var array<string, string> Headers that say what was detected, for debugging. */
+	private array $debug = array();
+
+	/**
+	 * Adds headers named X-AgentWelcome-Debug-* to whatever is sent next. Does nothing unless AGENTWELCOME_DEBUG is true.
+	 *
+	 * @param array<string, string> $values Value by name.
+	 * @return void
+	 */
+	public function debug( array $values ): void {
+		if ( ! self::debugging() ) {
+			return;
+		}
+
+		foreach ( $values as $name => $value ) {
+			// Headers are ASCII only.
+			$this->debug[ 'X-AgentWelcome-Debug-' . $name ] = (string) preg_replace_callback( '/[^\x20-\x7E]+/', static fn( array $found ): string => rawurlencode( $found[0] ), (string) $value );
+		}
+	}
+
+	/**
+	 * @return bool True when AGENTWELCOME_DEBUG is true.
+	 */
+	public static function debugging(): bool {
+		return defined( 'AGENTWELCOME_DEBUG' ) && true === constant( 'AGENTWELCOME_DEBUG' );
+	}
+
+	/**
+	 * Sends the debug headers on their own, for answers such as redirects.
+	 *
+	 * @return void
+	 */
+	public function send_debug(): void {
+		$this->send_headers( array() );
+	}
+
 	/**
 	 * Sends a body with headers for caching and for search engines. Answers 304 when the client already has the current version.
 	 *
@@ -113,7 +149,7 @@ final class MarkdownResponse {
 	 * @return void
 	 */
 	private function send_headers( array $headers ): void {
-		foreach ( $headers as $name => $value ) {
+		foreach ( array_merge( $headers, $this->debug ) as $name => $value ) {
 			header( $name . ': ' . str_replace( array( "\r", "\n" ), '', (string) $value ) );
 		}
 	}

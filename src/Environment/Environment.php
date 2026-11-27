@@ -148,7 +148,7 @@ final class Environment {
 		}
 
 		$urls = $this->allowed_urls();
-		$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		$host = (string) wp_parse_url( SiteAddress::current(), PHP_URL_HOST );
 
 		if ( array() !== $urls && ! self::host_matches( $host, $urls ) ) {
 			return 'url_not_allowed';

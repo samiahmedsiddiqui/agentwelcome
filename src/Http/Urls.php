@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Http;
 
+use AgentWelcome\Content\Language;
 use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Settings\Options;
 use WP_Post;
@@ -148,7 +149,7 @@ final class Urls {
 			return null;
 		}
 
-		$url = get_permalink( $post );
+		$url = Language::run( Language::of( $post ), static fn() => apply_filters( 'agentwelcome_permalink', get_permalink( $post ), $post ) );
 
 		if ( ! is_string( $url ) || '' === $url || false !== strpos( $url, '?' ) ) {
 			return null;
@@ -177,6 +178,16 @@ final class Urls {
 	 * @return int Number of views, at least 1.
 	 */
 	public function view_count( WP_Post $post ): int {
+		return Language::run( Language::of( $post ), fn(): int => $this->count_views( $post ) );
+	}
+
+	/**
+	 * Counts the views with the language of the page active.
+	 *
+	 * @param WP_Post $post The page.
+	 * @return int Number of views, at least 1.
+	 */
+	private function count_views( WP_Post $post ): int {
 		$count = 1;
 
 		if ( (int) get_option( 'page_for_posts' ) === $post->ID ) {
@@ -229,13 +240,21 @@ final class Urls {
 			return untrailingslashit( $url ) . '/page/' . $paged . '.md';
 		}
 
-		$front_page = $this->front_page();
+		$home = Language::run( Language::of( $post ), fn(): ?string => $this->is_front_page( $post ) ? Language::home_url( '/' . $this->home_file() ) : null );
 
-		if ( $front_page instanceof WP_Post && $front_page->ID === $post->ID ) {
-			return home_url( '/' . $this->home_file() );
-		}
+		return $home ?? untrailingslashit( $url ) . '.md';
+	}
 
-		return untrailingslashit( $url ) . '.md';
+	/**
+	 * Whether the page is the static homepage of the active language.
+	 *
+	 * @param WP_Post $post The page.
+	 * @return bool True when it is.
+	 */
+	public function is_front_page( WP_Post $post ): bool {
+		$front = $this->front_page();
+
+		return $front instanceof WP_Post && $front->ID === $post->ID;
 	}
 
 	/**
@@ -279,8 +298,20 @@ final class Urls {
 	 * @return array{post: WP_Post, paged: int}|null The page and the view number, or null when none matches or it is on another site.
 	 */
 	public function resolve_view( string $url ): ?array {
+		$language = (string) apply_filters( 'agentwelcome_url_language', '', $url );
+
+		return Language::run( $language, fn(): ?array => $this->find_view( $url ) );
+	}
+
+	/**
+	 * Looks up an address with its language active.
+	 *
+	 * @param string $url Full address or path, with or without .md.
+	 * @return array{post: WP_Post, paged: int}|null The page and the view number, or null.
+	 */
+	private function find_view( string $url ): ?array {
 		$parts = wp_parse_url( $url );
-		$home  = wp_parse_url( home_url() );
+		$home  = wp_parse_url( Language::home_url() );
 
 		if ( ! is_array( $parts ) || ! is_array( $home ) ) {
 			return null;
@@ -329,7 +360,7 @@ final class Urls {
 			return null;
 		}
 
-		$id = (int) get_option( 'page_on_front' );
+		$id = (int) apply_filters( 'agentwelcome_front_page_id', (int) get_option( 'page_on_front' ) );
 
 		return $id > 0 ? get_post( $id ) : null;
 	}
@@ -347,7 +378,7 @@ final class Urls {
 		$id = url_to_postid( $path . '/' );
 
 		if ( $id <= 0 ) {
-			$id = url_to_postid( home_url( '/' . $path . '/' ) );
+			$id = url_to_postid( Language::home_url( '/' . $path . '/' ) );
 		}
 
 		if ( $id > 0 ) {
@@ -386,7 +417,7 @@ final class Urls {
 	public function markdown_path( WP_Post $post ): ?string {
 		$url = $this->markdown_url( $post );
 
-		return null === $url ? null : $this->relative_path( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+		return null === $url ? null : Language::run( Language::of( $post ), fn(): string => $this->relative_path( (string) wp_parse_url( $url, PHP_URL_PATH ) ) );
 	}
 
 	/**
@@ -397,7 +428,7 @@ final class Urls {
 	 */
 	private function relative_path( string $path ): string {
 		$path = trim( $path, '/' );
-		$home = trim( (string) wp_parse_url( home_url(), PHP_URL_PATH ), '/' );
+		$home = trim( (string) wp_parse_url( Language::home_url(), PHP_URL_PATH ), '/' );
 
 		if ( '' !== $home && ( $path === $home || 0 === strpos( $path, $home . '/' ) ) ) {
 			$path = trim( substr( $path, strlen( $home ) ), '/' );

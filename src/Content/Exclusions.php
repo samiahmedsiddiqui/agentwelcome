@@ -84,6 +84,7 @@ final class Exclusions {
 	 */
 	private function matches_term( WP_Post $post ): bool {
 		$terms = array_map( 'absint', (array) $this->options->get( 'excluded_terms', array() ) );
+		$terms = array() === $terms ? $terms : (array) apply_filters( 'agentwelcome_excluded_terms', $terms, $post );
 
 		$taxonomies = get_object_taxonomies( $post->post_type );
 
@@ -104,7 +105,7 @@ final class Exclusions {
 	 */
 	private function relative_path( WP_Post $post ): string {
 		$path = (string) wp_parse_url( get_permalink( $post ), PHP_URL_PATH );
-		$home = trim( (string) wp_parse_url( home_url(), PHP_URL_PATH ), '/' );
+		$home = trim( (string) wp_parse_url( Language::home_url(), PHP_URL_PATH ), '/' );
 		$path = trim( $path, '/' );
 
 		if ( '' !== $home && 0 === strpos( $path, $home ) ) {

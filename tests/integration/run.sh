@@ -27,6 +27,7 @@ run "llms REST route" python3 llms_rest_test.py
 run "noindex" python3 noindex_test.py
 run "restricted pages" python3 restricted_test.py
 run "paginated views" python3 paged_test.py
+run "wpml" python3 wpml_test.py
 run "integrations and change notices" python3 integrations_test.py
 run "integrations without cron" python3 integrations_nocron_test.py
 run "capability" python3 capability_test.py
