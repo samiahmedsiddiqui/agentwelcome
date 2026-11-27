@@ -12,7 +12,7 @@ The addresses it serves, how a page becomes Markdown, and which pages are left o
 | Site index | `/llms.txt` |
 | All pages in one file (opt-in) | `/llms-full.txt` |
 
-`/about/index.html.md`, `/about/index.md` and `/index.html.md` are accepted as aliases. The homepage URL defaults to `/index.md`; choose `/index.html.md` instead under AgentWelcome > Settings > Content > Homepage. Both keep working, and the chosen one is the one listed in `llms.txt` and the page head. If a real page has the slug `index`, `/index.html.md` is used. Markdown responses send `Content-Type: text/markdown`, a canonical `Link` header to the HTML page, `X-Robots-Tag: noindex`, and support `ETag` and `If-Modified-Since`. Each page also gets `<link rel="alternate" type="text/markdown">` in its head.
+`/about/index.html.md`, `/about/index.md` and `/index.html.md` are accepted as aliases. The homepage URL defaults to `/index.md`; choose `/index.html.md` instead under AgentWelcome > Settings > Content > Homepage. Both keep working, and the chosen one is the one listed in `llms.txt` and the page head. If a real page has the slug `index`, `/index.html.md` is used. Markdown responses send `Content-Type: text/markdown`, a canonical `Link` header to the HTML page, `X-Robots-Tag: noindex`, and support `ETag` and `If-Modified-Since`. Each page that is served also gets `<link rel="alternate" type="text/markdown">` in its head. A page left out as [noindex](#noindex-pages) or restricted gets no link. The link follows the stored result, so a page that has not been generated yet has it, and after a change it is added or removed once the page has been refreshed. A page cache may keep the old head until it expires or is purged.
 
 ## Custom Permalinks
 
@@ -31,7 +31,7 @@ Works with default WordPress permalinks and with the [Custom Permalinks](https:/
 
 Off by default. Turn on **Return Markdown when a client asks for it** under AgentWelcome > Settings > Content > Accept header. A GET or HEAD request for a normal page address (no `.md`) whose `Accept` header ranks `text/markdown` above `text/html` then gets the same stored Markdown as the `.md` address. The `q` values are read, so `text/html, text/markdown;q=0.5`, `*/*`, `text/*` and a missing header still get the HTML page, and so does a tie.
 
-The answer sends `Vary: Accept`, `Cache-Control: private, no-store` (not the public 5 minute header of the `.md` address) and a canonical `Link` header to the HTML page, because many CDNs and page caches ignore `Vary`. It is only used for singular pages that are served as Markdown. Pages that are excluded, not served or not stored yet, and requests for the admin, REST, AJAX, feeds, previews and searches, are answered by WordPress as usual, with no 404.
+The answer sends `Vary: Accept`, `Cache-Control: private, no-store` (not the public 5 minute header of the `.md` address) and a canonical `Link` header to the HTML page, because many CDNs and page caches ignore `Vary`. It is only used for singular pages that are served as Markdown. Pages that are excluded, noindex, restricted, not served or not stored yet, and requests for the admin, REST, AJAX, feeds, previews and searches, are answered by WordPress as usual, with no 404.
 
 ## noindex pages
 

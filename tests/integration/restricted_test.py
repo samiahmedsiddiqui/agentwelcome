@@ -1,4 +1,5 @@
 """Pages that visitors cannot read (HTTP 401/403, or a redirect to another path) are left out of the .md address, llms.txt and llms-full.txt."""
+import re
 import urllib.parse
 from kit import *
 
@@ -25,6 +26,17 @@ def listed(slug):
 
 def in_full(slug):
     return "/%s/" % slug in site.get("/llms-full.txt" + bust())[2]
+
+
+def tagged(slug, client=None):
+    return "/%s.md\"" % slug in "".join(re.findall(r'<link rel="alternate" type="text/markdown"[^>]*>', (client or site).get("/%s/%s" % (slug, bust()))[2]))
+
+
+def negotiated(slug):
+    wpcli("option", "update", "agentwelcome_settings", '{"markdown_by_accept":true}', "--format=json")
+    code, h = site.get("/%s/%s" % (slug, bust()), headers={"Accept": "text/markdown"})[:2]
+    wpcli("option", "delete", "agentwelcome_settings")
+    return code, h.get("content-type", "")
 
 
 def gen(pid):
@@ -85,11 +97,15 @@ try:
 
     print("--- a page that answers visitors with 403")
     check("setup: served and listed", served("integ-rs-403"))
+    check("setup: the head links to the Markdown", tagged("integ-rs-403"))
     restrict(forbidden, "403")
     check("it is left out of the .md address, llms.txt and llms-full.txt", left_out("integ-rs-403"), md("integ-rs-403")[0])
     check("the .md address answers with the plain text 404", md("integ-rs-403")[0] == 404 and "text/plain" in md("integ-rs-403")[1].get("content-type", ""), md("integ-rs-403")[:2])
     r = row(forbidden)
     check("the reason is stored and no text is kept", r["restricted"] == "http_403" and r["markdown"] == "", r)
+    check("a logged-in user gets no Markdown link in the head", not tagged("integ-rs-403", admin))
+    got = negotiated("integ-rs-403")
+    check("asking for Markdown with Accept gets the 403, not an empty Markdown file", got[0] == 403 and not got[1].startswith("text/markdown"), got)
     check("the post content is not used as a fallback", r["source"] == "restricted", r["source"])
     check("Verify says visitors cannot read it, with the status", "visitors cannot read it" in verify("integ-rs-403") and "HTTP 403" in verify("integ-rs-403"))
     check("the editor box says so too", "visitors cannot read it" in admin.get("/wp-admin/post.php?post=%d&action=edit" % forbidden)[2])
@@ -116,16 +132,19 @@ try:
     wpcli("post", "meta", "delete", str(forbidden), "kit_restrict")
     gen(forbidden)
     check("it comes back in all three", served("integ-rs-403") and in_full("integ-rs-403"))
+    check("and so does the link in the head", tagged("integ-rs-403"))
 
     print("--- the setting")
     save_main(show_meta_box="1", exclude_noindex="1")
     run_batch()
     check("with the setting off, a 401 page is served as before", md("integ-rs-401")[0] == 200 and listed("integ-rs-401"), md("integ-rs-401")[0])
     check("a redirected page is served as before", md("integ-rs-gated")[0] == 200 and listed("integ-rs-gated"))
+    check("with the link in its head", tagged("integ-rs-gated", admin))
     check("nothing is stored as restricted", restricted(gated) in ("", None) and restricted(unauth) in ("", None), (restricted(gated), restricted(unauth)))
     save_main(show_meta_box="1", exclude_noindex="1", exclude_restricted="1")
     run_batch()
     check("with it on again, they leave", left_out("integ-rs-gated") and left_out("integ-rs-401"))
+    check("and so do their links", not tagged("integ-rs-gated", admin) and not tagged("integ-rs-401", admin))
 
     print("--- the filter")
     wpcli("option", "update", "kit_restricted_include", "redirect")

@@ -200,6 +200,7 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 == Changelog ==
 
 = 1.2.0 =
+* Fix: pages set to noindex and pages that visitors cannot read no longer get the Markdown link in their head, and are no longer returned as Markdown to clients that send `Accept: text/markdown`.
 * Fix: Verify & Preview finds a page with a non-Latin slug, such as Arabic or Chinese, when its percent-encoded address is entered.
 
 = 1.1.0 =

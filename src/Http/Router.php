@@ -115,7 +115,7 @@ final class Router implements Hookable {
 
 		$served = $this->pages->fetch( $post );
 
-		if ( null === $served ) {
+		if ( null === $served || $this->eligibility->hides( $served->entry ) ) {
 			return;
 		}
 

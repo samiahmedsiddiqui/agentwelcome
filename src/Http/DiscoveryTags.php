@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Http;
 
+use AgentWelcome\Cache\Store;
 use AgentWelcome\Content\Eligibility;
 use AgentWelcome\Contracts\Hookable;
 use AgentWelcome\Environment\Environment;
@@ -23,11 +24,13 @@ final class DiscoveryTags implements Hookable {
 	 * @param Eligibility $eligibility Decides whether a page is served.
 	 * @param Urls        $urls        Builds the addresses.
 	 * @param Environment $environment Tells whether the plugin is running on this site.
+	 * @param Store       $store       Stored copies, which hold whether a page is noindex or restricted.
 	 */
 	public function __construct(
 		private Eligibility $eligibility,
 		private Urls $urls,
-		private Environment $environment
+		private Environment $environment,
+		private Store $store
 	) {}
 
 	/**
@@ -50,6 +53,11 @@ final class DiscoveryTags implements Hookable {
 		$post = get_queried_object();
 
 		if ( ! $post instanceof WP_Post || ! $this->eligibility->is_eligible( $post ) ) {
+			return;
+		}
+
+		// A page with no stored copy yet keeps the link, as its Markdown address generates it on request.
+		if ( $this->eligibility->hides( $this->store->get( $post->ID, false ) ) ) {
 			return;
 		}
 
