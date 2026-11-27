@@ -125,6 +125,21 @@ try:
     check("and the source says so", "Post content (fallback)" in page)
     clear_env()
 
+    print("--- a slug in another script")
+    pid_n = mk("Verify Script", "<p>Script text.</p>", post_name="verify-关于")
+    ids.append(pid_n)
+    clear_jobs()
+    NURL = jphp("echo json_encode(get_permalink(%d));" % pid_n)
+    check("the permalink is percent-encoded", "%" in NURL, NURL)
+    check("found by its address", verdict(verify(NURL)[2]) == "not_stored")
+    check("found by its path", verdict(verify(NURL.replace(B, ""))[2]) == "not_stored")
+    check("found by a path without a leading slash", verdict(verify(NURL.replace(B + "/", ""))[2]) == "not_stored")
+    check("found by the readable address", verdict(verify(urllib.parse.unquote(NURL))[2]) == "not_stored")
+    nonce = nonce_from(admin.get("/wp-admin/admin.php?page=agentwelcome-verify")[2])
+    page = admin.req("/wp-admin/admin.php?page=agentwelcome-verify", {"_wpnonce": nonce, "agentwelcome_verify_url": NURL})[2]
+    check("found when typed into the form", verdict(page) == "not_stored", verdict(page))
+    check("the form keeps the address", 'value="%s"' % NURL in page)
+
     print("--- selectors tried without saving")
     nonce = nonce_from(admin.get("/wp-admin/admin.php?page=agentwelcome-verify")[2])
     code, _, page, _ = admin.req("/wp-admin/admin.php?page=agentwelcome-verify", {"_wpnonce": nonce, "_wp_http_referer": "/x", "agentwelcome_verify_url": URL, "agentwelcome_verify_selector": "", "agentwelcome_verify_strip": "p"})

@@ -132,12 +132,12 @@ final class VerifyPage implements Hookable {
 
 		if ( isset( $_POST['agentwelcome_verify_url'] ) ) {
 			check_admin_referer( self::NONCE );
-			$url      = trim( sanitize_text_field( wp_unslash( $_POST['agentwelcome_verify_url'] ) ) );
+			$url      = self::clean_address( wp_unslash( $_POST['agentwelcome_verify_url'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cleaned by clean_address().
 			$selector = isset( $_POST['agentwelcome_verify_selector'] ) ? sanitize_text_field( wp_unslash( $_POST['agentwelcome_verify_selector'] ) ) : '';
 			$strip    = isset( $_POST['agentwelcome_verify_strip'] ) ? sanitize_textarea_field( wp_unslash( $_POST['agentwelcome_verify_strip'] ) ) : '';
 			$headings = isset( $_POST['agentwelcome_verify_headings'] ) ? sanitize_textarea_field( wp_unslash( $_POST['agentwelcome_verify_headings'] ) ) : '';
 		} elseif ( isset( $_GET['url'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check, nothing is changed.
-			$url = trim( sanitize_text_field( wp_unslash( $_GET['url'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check, nothing is changed.
+			$url = self::clean_address( wp_unslash( $_GET['url'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Read-only check, cleaned by clean_address().
 		}
 
 		View::render(
@@ -156,6 +156,27 @@ final class VerifyPage implements Hookable {
 		if ( '' !== $url ) {
 			$this->result( $url, $selector, $strip, $headings );
 		}
+	}
+
+	/**
+	 * Cleans a submitted address. Unlike sanitize_text_field(), it keeps the percent-encoded characters of a slug.
+	 *
+	 * @param mixed $input Full address or path.
+	 * @return string The address, or an empty string.
+	 */
+	private static function clean_address( mixed $input ): string {
+		$url = is_string( $input ) ? trim( $input ) : '';
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		// Without a leading slash, esc_url_raw() would read a path as a host name.
+		if ( 1 !== preg_match( '#^(/|https?://)#i', $url ) ) {
+			$url = '/' . $url;
+		}
+
+		return esc_url_raw( $url, array( 'http', 'https' ) );
 	}
 
 	/**
