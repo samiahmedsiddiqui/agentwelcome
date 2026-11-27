@@ -1,4 +1,5 @@
 """Noindex is read from the page source: the robots meta tag and the X-Robots-Tag header."""
+import re
 import urllib.parse
 from kit import *
 
@@ -26,6 +27,17 @@ def listed(slug):
 
 def in_full(slug):
     return "/%s/" % slug in site.get("/llms-full.txt" + bust())[2]
+
+
+def tagged(slug, client=None):
+    return "/%s.md\"" % slug in "".join(re.findall(r'<link rel="alternate" type="text/markdown"[^>]*>', (client or site).get("/%s/%s" % (slug, bust()))[2]))
+
+
+def negotiated(slug):
+    wpcli("option", "update", "agentwelcome_settings", '{"markdown_by_accept":true}', "--format=json")
+    code, h = site.get("/%s/%s" % (slug, bust()), headers={"Accept": "text/markdown"})[:2]
+    wpcli("option", "delete", "agentwelcome_settings")
+    return code, h.get("content-type", "")
 
 
 def gen(pid):
@@ -70,6 +82,7 @@ try:
     print("--- a page that was never generated is not listed")
     new = create_page("Nx New", "<p>New page.</p>", post_name="integ-nx-new")
     check("not listed before it is generated", not listed("integ-nx-new") and not in_full("integ-nx-new"))
+    check("but its head already links to the Markdown", tagged("integ-nx-new"))
     check("the first request generates and serves it", md("integ-nx-new")[0] == 200)
     check("then it is listed, and the result is stored as not noindex", listed("integ-nx-new") and flag(new) == "0", flag(new))
 
@@ -77,10 +90,14 @@ try:
     a = create_page("Nx A", "<p>A.</p>", post_name="integ-nx-a")
     md("integ-nx-a")
     check("setup: served", served("integ-nx-a"))
+    check("setup: the head links to the Markdown", tagged("integ-nx-a"))
     wpcli("post", "meta", "update", str(a), "kit_robots", "noindex")
     gen(a)
     check("noindex in the meta tag leaves the page out of the .md, llms.txt and llms-full.txt", left_out("integ-nx-a"), md("integ-nx-a")[0])
     check("the result is stored", flag(a) == "1", flag(a))
+    check("the head has no Markdown link", not tagged("integ-nx-a"))
+    got = negotiated("integ-nx-a")
+    check("asking for Markdown with Accept gets the HTML page", got[0] == 200 and got[1].startswith("text/html"), got)
     check("Verify says where it came from", "Found in the robots meta tag" in verify("integ-nx-a"))
     check("the editor box explains it", "says noindex" in admin.get("/wp-admin/post.php?post=%d&action=edit" % a)[2])
     for value, kept in (("noindex, nofollow", False), ("none", False), ("index, follow", True), ("max-image-preview:large", True)):
@@ -90,6 +107,7 @@ try:
     wpcli("post", "meta", "delete", str(a), "kit_robots")
     gen(a)
     check("tag removed and refreshed: back in the list", served("integ-nx-a"))
+    check("and the head links to the Markdown again", tagged("integ-nx-a"))
 
     print("--- the X-Robots-Tag header")
     b = create_page("Nx B", "<p>B.</p>", post_name="integ-nx-b")
@@ -120,8 +138,10 @@ try:
     check("setup: left out", left_out("integ-nx-a"))
     save_main(show_meta_box="1")
     check("with the setting off, the stored result does not hide the page", served("integ-nx-a") and in_full("integ-nx-a"))
+    check("and the head links to the Markdown", tagged("integ-nx-a"))
     save_main(show_meta_box="1", exclude_noindex="1")
     check("with it on again, the page leaves at once", left_out("integ-nx-a"))
+    check("and so does the link", not tagged("integ-nx-a"))
 
     print("--- results that are unknown")
     php(T + "$wpdb->query( \"UPDATE {$wpdb->prefix}agentwelcome_pages SET noindex = NULL WHERE post_id = %d\" ); AgentWelcome\\Index\\OutputCache::purge();" % a)

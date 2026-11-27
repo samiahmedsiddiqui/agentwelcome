@@ -199,6 +199,9 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 
 == Changelog ==
 
+= 1.2.0 =
+* Fix: pages set to noindex and pages that visitors cannot read no longer get the Markdown link in their head, and are no longer returned as Markdown to clients that send `Accept: text/markdown`.
+
 = 1.1.0 =
 * New: the pages of the blog page and other list pages, such as `/blog/page/2/`, are available as Markdown at `/blog/page/2.md`, each stored and refreshed on its own.
 * New: pages that visitors cannot read, because a membership or access-control plugin answers with HTTP 401 or 403 or redirects to a login page, are left out of llms.txt, llms-full.txt and the Markdown pages. A setting and the `agentwelcome_is_restricted` filter include them.
