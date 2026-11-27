@@ -201,6 +201,8 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 
 = 1.2.0 =
 * New: WPML support for sites with a directory or a domain per language: Markdown pages and discovery tags for every translation, one llms.txt with a part for each language, and the page's own language in the front matter.
+* Fix: pages set to noindex and pages that visitors cannot read no longer get the Markdown link in their head, and are no longer returned as Markdown to clients that send `Accept: text/markdown`.
+* Fix: Verify & Preview finds a page with a non-Latin slug, such as Arabic or Chinese, when its percent-encoded address is entered.
 
 = 1.1.0 =
 * New: the pages of the blog page and other list pages, such as `/blog/page/2/`, are available as Markdown at `/blog/page/2.md`, each stored and refreshed on its own.

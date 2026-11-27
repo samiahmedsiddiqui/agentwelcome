@@ -163,7 +163,7 @@ final class Plugin {
 			new Capabilities(),
 			new OutputCache(),
 			new Router( $urls, $eligibility, $pages, $environment, $llms, $llms_full, $llms_options, new MarkdownResponse(), $options ),
-			new DiscoveryTags( $eligibility, $urls, $environment ),
+			new DiscoveryTags( $eligibility, $urls, $environment, $store ),
 			new CronAuth( $options ),
 			new PagesController( $store, $pages, $status, $eligibility, $environment ),
 			$scan,

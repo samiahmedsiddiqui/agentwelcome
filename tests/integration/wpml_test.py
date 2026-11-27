@@ -175,8 +175,8 @@ try:
     print("--- admin")
     admin = Client()
     check("admin logged in", admin.login())
-    page = admin.get("/wp-admin/admin.php?page=agentwelcome-verify&url=" + urllib.parse.quote(url("/zh-hans/integ-wpml-about-zh/"), safe=""))[2]
-    check("Verify & Preview finds a translated page by its address", url("/zh-hans/integ-wpml-about-zh.md") in page and "In sync" in page, "No page was found" in page)
+    page = admin.get("/wp-admin/admin.php?page=agentwelcome-verify&url=" + urllib.parse.quote(url(AR + "/"), safe=""))[2]
+    check("Verify & Preview finds a translated page by its address", url(AR + ".md") in page and "In sync" in page, "No page was found" in page)
 
     print("--- debug headers")
     check("none by default", not any(k.startswith("x-agentwelcome-debug") for k in get(AR + ".md")[1]))

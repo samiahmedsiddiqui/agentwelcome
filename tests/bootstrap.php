@@ -101,3 +101,11 @@ if ( ! function_exists( 'wp_trim_words' ) ) {
 		return implode( ' ', array_slice( $words, 0, $num_words ) ) . ( count( $words ) > $num_words ? ( $more ?? '&hellip;' ) : '' );
 	}
 }
+
+$GLOBALS['agentwelcome_test_options'] = array();
+
+if ( ! function_exists( 'get_option' ) ) {
+	function get_option( $name, $default_value = false ) {
+		return $GLOBALS['agentwelcome_test_options'][ $name ] ?? $default_value;
+	}
+}
