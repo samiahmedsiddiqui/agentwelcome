@@ -68,6 +68,9 @@ if ( is_readable( $kit_file ) ) {
 	if ( ! empty( $kit['files_cap'] ) ) {
 		add_filter( 'agentwelcome_files_capability', static fn() => (string) $kit['files_cap'] );
 	}
+	if ( ! empty( $kit['debug'] ) ) {
+		define( 'AGENTWELCOME_DEBUG', true );
+	}
 	if ( ! empty( $kit['no_loopback'] ) ) {
 		add_filter( 'agentwelcome_use_loopback', '__return_false' );
 	}

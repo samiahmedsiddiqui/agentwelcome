@@ -12,6 +12,7 @@ namespace AgentWelcome\Index;
 use AgentWelcome\Cache\Store;
 use AgentWelcome\Content\Description;
 use AgentWelcome\Content\Eligibility;
+use AgentWelcome\Content\Language;
 use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Content\PostTypes;
 use AgentWelcome\Http\Urls;
@@ -49,9 +50,12 @@ final class LlmsTxt {
 		$mode   = $this->options->mode();
 		$custom = $this->options->custom();
 
+		$languages = (array) apply_filters( 'agentwelcome_languages', array() );
+		$default   = (string) array_key_first( $languages );
+
 		$text = LlmsOptions::CUSTOM === $mode && '' !== $custom
 			? self::compose( $mode, $custom, array(), array() )
-			: self::compose( $mode, $custom, $this->heading(), $this->sections() );
+			: self::compose( $mode, $custom, Language::run( $default, fn(): array => $this->heading() ), $this->all_sections( $languages ) );
 
 		return (string) apply_filters( 'agentwelcome_llms_txt', $text );
 	}
@@ -95,15 +99,72 @@ final class LlmsTxt {
 	}
 
 	/**
-	 * One section per served post type, with a line for each page.
+	 * The sections of the default language, then one part for every other language.
 	 *
+	 * @param array<string, string> $languages Name by language code, the default first. Empty on a site with one language.
 	 * @return string[] Lines of text.
 	 */
-	private function sections(): array {
+	private function all_sections( array $languages ): array {
+		if ( array() === $languages ) {
+			return $this->sections();
+		}
+
+		$default = (string) array_key_first( $languages );
+		$name    = Language::run( $default, static fn(): string => SingleLine::from( get_bloginfo( 'name' ) ) );
+		$lines   = Language::run( $default, fn(): array => $this->sections( $default ) );
+
+		foreach ( array_slice( $languages, 1, null, true ) as $code => $label ) {
+			$part = Language::run(
+				(string) $code,
+				fn(): array => $this->language_part( (string) $code, (string) $label, $name )
+			);
+
+			if ( array() !== $part ) {
+				$lines = array() === $lines ? $part : array_merge( $lines, array( '' ), $part );
+			}
+		}
+
+		return $lines;
+	}
+
+	/**
+	 * Heading, tagline and sections of one language, which must be active.
+	 *
+	 * @param string $code      Language code.
+	 * @param string $label     Name of the language.
+	 * @param string $site_name Site name in the default language.
+	 * @return string[] Lines of text, empty when the language has no page to list.
+	 */
+	private function language_part( string $code, string $label, string $site_name ): array {
+		$sections = $this->sections( $code, '###' );
+
+		if ( array() === $sections ) {
+			return array();
+		}
+
+		$name    = SingleLine::from( get_bloginfo( 'name' ) );
+		$tagline = SingleLine::from( get_bloginfo( 'description' ) );
+		$lines   = array( '## ' . SingleLine::from( $label ) . ( $name === $site_name ? '' : ': ' . $name ), '' );
+
+		if ( '' !== $tagline ) {
+			array_push( $lines, '> ' . $tagline, '' );
+		}
+
+		return array_merge( $lines, $sections );
+	}
+
+	/**
+	 * One section per served post type, with a line for each page.
+	 *
+	 * @param string $language Only pages of this language, or an empty string on a site with one language.
+	 * @param string $level    Markdown heading marks of the sections.
+	 * @return string[] Lines of text.
+	 */
+	private function sections( string $language = '', string $level = '##' ): array {
 		$lines = array();
 
 		foreach ( $this->post_types->enabled() as $type ) {
-			$entries = $this->entries( $type );
+			$entries = $this->entries( $type, $language );
 
 			if ( empty( $entries ) ) {
 				continue;
@@ -115,7 +176,7 @@ final class LlmsTxt {
 				$lines[] = '';
 			}
 
-			$lines[] = '## ' . ( $object ? $object->labels->name : $type );
+			$lines[] = $level . ' ' . ( $object ? $object->labels->name : $type );
 			$lines[] = '';
 
 			foreach ( $entries as $entry ) {
@@ -129,10 +190,11 @@ final class LlmsTxt {
 	/**
 	 * Lines for the pages of one post type.
 	 *
-	 * @param string $type Post type.
+	 * @param string $type     Post type.
+	 * @param string $language Language code, or an empty string.
 	 * @return string[] One line per served page.
 	 */
-	private function entries( string $type ): array {
+	private function entries( string $type, string $language ): array {
 		$hierarchical = is_post_type_hierarchical( $type );
 		$posts        = get_posts(
 			array(
@@ -152,12 +214,17 @@ final class LlmsTxt {
 		$reasons = $this->store->restricted_reasons( wp_list_pluck( $posts, 'ID' ) );
 
 		foreach ( $posts as $post ) {
+			// A query can also return untranslated content, which is listed under its own language only.
+			if ( '' !== $language && Language::of( $post ) !== $language ) {
+				continue;
+			}
+
 			// A page that has not been generated yet is not listed, because it is not known whether it says noindex.
 			if ( ! array_key_exists( $post->ID, $flags ) || $this->eligibility->hides_result( $flags[ $post->ID ] ) || $this->eligibility->hides_restricted( $reasons[ $post->ID ] ?? null ) ) {
 				continue;
 			}
 
-			$entry = $this->entry( $post );
+			$entry = Language::run( $language, fn(): ?string => $this->entry( $post ) );
 
 			if ( null !== $entry ) {
 				$entries[] = $entry;

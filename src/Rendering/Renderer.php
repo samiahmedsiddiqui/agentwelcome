@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace AgentWelcome\Rendering;
 
+use AgentWelcome\Content\Language;
 use AgentWelcome\Http\Urls;
 use AgentWelcome\Settings\Options;
 use WP_Post;
@@ -41,6 +42,17 @@ final class Renderer {
 	 * @return RenderResult The HTML and how it was obtained.
 	 */
 	public function render( WP_Post $post, int $paged = 1 ): RenderResult {
+		return Language::run( Language::of( $post ), fn(): RenderResult => $this->read( $post, $paged ) );
+	}
+
+	/**
+	 * Reads the HTML with the language of the page active.
+	 *
+	 * @param WP_Post $post  The page.
+	 * @param int     $paged Number of the paginated view, 1 for the page itself.
+	 * @return RenderResult The HTML and how it was obtained.
+	 */
+	private function read( WP_Post $post, int $paged ): RenderResult {
 		$url = $this->urls->view_url( $post, $paged );
 
 		if ( null === $url ) {
@@ -198,7 +210,7 @@ final class Renderer {
 	 */
 	private function is_same_site( string $url ): bool {
 		$target = wp_parse_url( $url );
-		$home   = wp_parse_url( home_url() );
+		$home   = wp_parse_url( Language::home_url() );
 
 		if ( ! is_array( $target ) || ! is_array( $home ) || ! in_array( $target['scheme'] ?? '', array( 'http', 'https' ), true ) ) {
 			return false;

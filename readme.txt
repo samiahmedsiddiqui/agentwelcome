@@ -84,7 +84,7 @@ No. AgentWelcome reads the page as the server sends it, so text, products or lis
 
 = Does it work with multilingual sites such as WPML or Polylang? =
 
-Not yet. Multilingual sites are not supported, so do not rely on it to list or serve each language.
+WPML is supported when each language has its own directory (such as `/ar/`) or its own domain. Every translation has its own Markdown address (`/ar/about.md`, `/ar/index.md`), and the one `/llms.txt` at the root lists the default language first, then each other language. A page without a translation gets a 404 under that language. The WPML format that adds the language as a query argument (`?lang=ar`) is not supported. Polylang is not supported yet.
 
 = Does it work with plain permalinks? =
 
@@ -198,6 +198,9 @@ Developed with AI coding tools and maintained by Sami Ahmed Siddiqui. Every chan
 4. The scan of all pages reports which ones have drifted from their stored copy.
 
 == Changelog ==
+
+= 1.2.0 =
+* New: WPML support for sites with a directory or a domain per language: Markdown pages and discovery tags for every translation, one llms.txt with a part for each language, and the page's own language in the front matter.
 
 = 1.1.0 =
 * New: the pages of the blog page and other list pages, such as `/blog/page/2/`, are available as Markdown at `/blog/page/2.md`, each stored and refreshed on its own.

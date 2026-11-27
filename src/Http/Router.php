@@ -11,6 +11,7 @@ namespace AgentWelcome\Http;
 
 use AgentWelcome\Cache\PageCache;
 use AgentWelcome\Content\Eligibility;
+use AgentWelcome\Content\Language;
 use AgentWelcome\Contracts\Hookable;
 use AgentWelcome\Environment\Environment;
 use AgentWelcome\Index\LlmsFullTxt;
@@ -62,19 +63,87 @@ final class Router implements Hookable {
 	 * @return void
 	 */
 	public function maybe_serve( WP $wp ): void {
-		if ( ! Urls::has_pretty_permalinks() || ! $this->is_read_request() || ! $this->environment->is_active() ) {
+		if ( ! Urls::has_pretty_permalinks() || ! $this->is_read_request() ) {
 			return;
 		}
 
-		$route = $this->urls->parse_route( (string) $wp->request );
+		if ( ! $this->environment->is_active() ) {
+			if ( MarkdownResponse::debugging() && null !== $this->urls->parse_route( (string) $wp->request ) ) {
+				$this->response->debug( array( 'Inactive' => (string) $this->environment->reason() ) );
+				$this->response->send_debug();
+			}
+
+			return;
+		}
+
+		/**
+		 * Filters how a request is read. A translation plugin sets the language and the path below the home of that language.
+		 *
+		 * @param array $request Keys: path, language, source, index_url (address that serves the llms files instead) and shared (whether a built llms file may be saved).
+		 */
+		$request = (array) apply_filters(
+			'agentwelcome_request',
+			array(
+				'path'      => (string) $wp->request,
+				'language'  => '',
+				'source'    => '',
+				'index_url' => '',
+				'shared'    => true,
+			)
+		);
+
+		// Nothing to serve, so the language is left alone.
+		if ( null === $this->urls->parse_route( (string) $request['path'] ) && ( null === $this->options || ! $this->options->get( 'markdown_by_accept' ) ) ) {
+			return;
+		}
+
+		Language::run(
+			(string) $request['language'],
+			function () use ( $wp, $request ): void {
+				$this->route( $wp, $request );
+			}
+		);
+	}
+
+	/**
+	 * Serves the request with its language active.
+	 *
+	 * @param WP                   $wp      The WordPress request.
+	 * @param array<string, mixed> $request How the request was read.
+	 * @return void
+	 */
+	private function route( WP $wp, array $request ): void {
+		$path  = (string) $request['path'];
+		$route = $this->urls->parse_route( $path );
 
 		if ( null === $route ) {
-			$this->maybe_serve_negotiated( $wp );
+			$this->maybe_serve_negotiated( $wp, $path );
 			return;
+		}
+
+		if ( MarkdownResponse::debugging() ) {
+			$this->response->debug(
+				(array) apply_filters(
+					'agentwelcome_debug_headers',
+					array(
+						'Language'        => (string) $request['language'],
+						'Language-Source' => (string) $request['source'],
+						'Path'            => $path,
+						'WP-Request'      => (string) $wp->request,
+						'Post'            => '',
+					)
+				)
+			);
+		}
+
+		if ( Urls::ROUTE_PAGE !== $route['type'] && '' !== $request['index_url'] && ( Urls::ROUTE_LLMS === $route['type'] || $this->llms_options->full_enabled() ) ) {
+			$this->response->send_debug();
+			wp_safe_redirect( $request['index_url'] . '/' . trim( $path, '/' ), 301 );
+			$this->terminate();
 		}
 
 		if ( Urls::ROUTE_LLMS === $route['type'] ) {
-			$this->serve_index( OutputCache::LLMS, fn(): string => $this->llms->build() );
+			$this->serve_index( OutputCache::LLMS, fn(): string => $this->llms->build(), (bool) $request['shared'] );
 		}
 
 		if ( Urls::ROUTE_LLMS_FULL === $route['type'] ) {
@@ -82,10 +151,10 @@ final class Router implements Hookable {
 				return;
 			}
 
-			$this->serve_index( OutputCache::FULL, fn(): string => $this->llms_full->build() );
+			$this->serve_index( OutputCache::FULL, fn(): string => $this->llms_full->build(), (bool) $request['shared'] );
 		}
 
-		$this->serve_page( $route, trim( (string) $wp->request, '/' ) );
+		$this->serve_page( $route, trim( $path, '/' ) );
 	}
 
 	/**
@@ -93,10 +162,11 @@ final class Router implements Hookable {
 	 *
 	 * Anything that is not served is left to WordPress, so the HTML page answers as usual.
 	 *
-	 * @param WP $wp The WordPress request.
+	 * @param WP     $wp   The WordPress request.
+	 * @param string $path Requested path below the home of its language.
 	 * @return void
 	 */
-	private function maybe_serve_negotiated( WP $wp ): void {
+	private function maybe_serve_negotiated( WP $wp, string $path ): void {
 		if ( null === $this->options || ! $this->options->get( 'markdown_by_accept' ) || ! $this->is_page_request( $wp ) ) {
 			return;
 		}
@@ -107,7 +177,7 @@ final class Router implements Hookable {
 			return;
 		}
 
-		$post = $this->urls->resolve( trim( (string) $wp->request, '/' ) );
+		$post = $this->urls->resolve( trim( $path, '/' ) );
 
 		if ( null === $post || ! $this->eligibility->is_eligible( $post ) ) {
 			return;
@@ -163,12 +233,13 @@ final class Router implements Hookable {
 	/**
 	 * Sends an llms file, from the saved copy when there is one, and stops.
 	 *
-	 * @param string             $key   Name of the saved copy.
-	 * @param callable(): string $build Builds the file when there is no saved copy.
+	 * @param string             $key    Name of the saved copy.
+	 * @param callable(): string $build  Builds the file when there is no saved copy.
+	 * @param bool               $shared False to build the file without using or saving a copy.
 	 * @return never
 	 */
-	private function serve_index( string $key, callable $build ): void {
-		$this->response->send( OutputCache::remember( $key, $build ), MarkdownResponse::TEXT );
+	private function serve_index( string $key, callable $build, bool $shared ): void {
+		$this->response->send( $shared ? OutputCache::remember( $key, $build ) : $build(), MarkdownResponse::TEXT );
 		$this->terminate();
 	}
 
@@ -216,6 +287,8 @@ final class Router implements Hookable {
 			$this->not_found( $route, $request );
 			return;
 		}
+
+		$this->response->debug( array( 'Post' => (string) $post->ID ) );
 
 		if ( ! $this->eligibility->is_eligible( $post ) ) {
 			$this->not_found( $route, $request );
@@ -266,6 +339,8 @@ final class Router implements Hookable {
 			return;
 		}
 
+		$this->response->debug( array( 'Post' => (string) $post->ID ) );
+		$this->response->send_debug();
 		wp_safe_redirect( $target, 301 );
 		$this->terminate();
 	}

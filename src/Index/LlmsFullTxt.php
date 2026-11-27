@@ -11,6 +11,7 @@ namespace AgentWelcome\Index;
 
 use AgentWelcome\Cache\Store;
 use AgentWelcome\Content\Eligibility;
+use AgentWelcome\Content\Language;
 use AgentWelcome\Content\PostMeta;
 use AgentWelcome\Http\Urls;
 use AgentWelcome\Settings\LlmsOptions;
@@ -59,9 +60,10 @@ final class LlmsFullTxt {
 			return (string) apply_filters( 'agentwelcome_llms_full_txt', $custom . "\n" );
 		}
 
-		$max  = max( 100000, (int) apply_filters( 'agentwelcome_llms_full_max_bytes', self::MAX_BYTES ) );
-		$text = self::start( $mode, $custom, SingleLine::from( get_bloginfo( 'name' ) ) );
-		$left = 0;
+		$max     = max( 100000, (int) apply_filters( 'agentwelcome_llms_full_max_bytes', self::MAX_BYTES ) );
+		$default = (string) array_key_first( (array) apply_filters( 'agentwelcome_languages', array() ) );
+		$text    = self::start( $mode, $custom, Language::run( $default, static fn(): string => SingleLine::from( get_bloginfo( 'name' ) ) ) );
+		$left    = 0;
 
 		foreach ( $this->blocks() as $block ) {
 			if ( $left > 0 || strlen( $text ) + strlen( $block ) > $max ) {
